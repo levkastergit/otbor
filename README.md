@@ -9,11 +9,11 @@
 
 ## Установка на ПК с генерацией
 
-В папке FluxKit откройте командную строку (`cmd`) и выполните:
+В папке FluxKit откройте терминал (правый клик по пустому месту папки, «Открыть в терминале») и выполните по очереди:
 
 ```bat
 curl.exe -fsSLo UPDATE.bat https://raw.githubusercontent.com/levkastergit/otbor/main/kit/UPDATE.bat
-UPDATE.bat
+.\UPDATE.bat
 ```
 
 `UPDATE.bat` кладёт `Otbor.exe` в `results`, обновляет `scripts\generate.py` и `scripts\generate.ps1` и добавляет

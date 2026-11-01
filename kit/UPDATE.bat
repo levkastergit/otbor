@@ -5,7 +5,8 @@ cd /d "%~dp0"
 set BASE=https://raw.githubusercontent.com/levkastergit/otbor/main
 if not exist jobs.json (
   echo Put UPDATE.bat into the FluxKit folder, next to jobs.json.
-  goto fail
+  pause
+  exit /b 1
 )
 if not exist results mkdir results
 call :get Otbor.exe results\Otbor.exe || goto fail
