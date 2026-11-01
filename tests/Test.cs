@@ -795,6 +795,173 @@ namespace Otbor
             Pump(30);
         }
 
+        static string[] DriveNames(string folder)
+        {
+            return Directory.Exists(folder)
+                ? Directory.GetFiles(folder, "*", SearchOption.AllDirectories).Select(f => f.Substring(folder.Length + 1)).OrderBy(x => x, StringComparer.Ordinal).ToArray()
+                : new string[0];
+        }
+
+        static void TestDrive()
+        {
+            int quiet = DriveSync.QuietMs, retry = DriveSync.RetryMs;
+            DriveSync.QuietMs = 20;
+            DriveSync.RetryMs = 100;
+            string keys = TokenStore.Dir;
+            string root = Fresh("drive");
+            string base_ = Path.GetDirectoryName(root);
+            TokenStore.Dir = Path.Combine(base_, "appdata");
+            try
+            {
+                MakeJob(root, "30_char_p0", "char_dasha_hub", true);
+                MakeJob(root, "60_bg_rooms", "bg_kids_room", false);
+                MakeJob(root, "80_chars2", "dasha_candle", true);
+                MakeJob(root, "99_old", "unknown_job", true);
+                var s = new Session(root);
+                s.Decide(JobOf(s, "char_dasha_hub"), new[] { "char_dasha_hub__ref_1", "char_dasha_hub__ref_3" });
+                s.Decide(JobOf(s, "bg_kids_room"), new[] { "bg_kids_room__ref_2" });
+                s.Decide(JobOf(s, "dasha_candle"), new string[0], "нет");
+                s.Decide(JobOf(s, "unknown_job"), new[] { "unknown_job__ref_1" });
+                List<DriveFile> files = s.DriveFiles();
+                string[] targets = files.Select(f => f.Target).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+                Check(string.Join(" | ", targets) == @"Локации\Детская\bg_kids_room__ref_2.png | Персонажи\Даша\char_dasha_hub__ref_1_alpha.png | " +
+                      @"Персонажи\Даша\char_dasha_hub__ref_3_alpha.png | Прочее\Без раздела\unknown_job__ref_1_alpha.png",
+                    "вырезанные спрайты и фоны по разделам, отказов нет: " + string.Join(" | ", targets));
+                Check(files.All(f => File.Exists(f.Source)), "источники на месте");
+
+                string myDrive = Path.Combine(base_, "My Drive");
+                string folder = Path.Combine(myDrive, DriveSync.FolderName);
+                string manifest = s.Abs(Session.DriveFileList);
+                var drive = new DriveSync(manifest, null);
+                drive.Start();
+                Check(drive.Label == "Не подключён", "сначала не подключён");
+                drive.Request(files);
+                Thread.Sleep(80);
+                Check(!File.Exists(manifest), "без папки ничего не выкладывается");
+
+                drive.SetFolder(folder);
+                WaitFor(() => drive.Problem != null);
+                Check(drive.Problem != null && drive.Problem.Contains("Google Диск") && !Directory.Exists(myDrive), "приложение закрыто: папка не создаётся, причина написана: " + drive.Problem);
+                Check(DriveSync.LoadFolder() == folder, "папка запомнена");
+                Directory.CreateDirectory(myDrive);
+                string mine = Path.Combine(folder, "Персонажи", "моё.txt");
+                Directory.CreateDirectory(Path.GetDirectoryName(mine));
+                File.WriteAllText(mine, "своё");
+                WaitFor(() => drive.Count == 4);
+                Check(drive.Problem == null && drive.Count == 4, "приложение запущено: выкладка повторилась сама: " + drive.Label);
+                Check(DriveNames(folder).Length == 5 && DriveNames(folder).Contains(@"Персонажи\Даша\char_dasha_hub__ref_3_alpha.png"), "файлы на месте: " + DriveNames(folder).Length);
+                DriveFile hub = files.First(f => f.Target.Contains("__ref_3"));
+                Check(File.ReadAllBytes(hub.Source).SequenceEqual(File.ReadAllBytes(Path.Combine(folder, hub.Target))), "содержимое совпадает");
+
+                // Повторная выкладка ничего не копирует заново
+                string copy = Path.Combine(folder, hub.Target);
+                File.SetLastWriteTimeUtc(copy, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+                drive.Request(s.DriveFiles());
+                Check(drive.Flush(3000), "выкладка закончена");
+                Check(File.GetLastWriteTimeUtc(copy).Year == 2020, "неизменённый файл заново не копируется");
+                File.Delete(copy);
+                drive.Request(s.DriveFiles());
+                drive.Flush(3000);
+                Check(File.Exists(copy), "файл, пропавший с Диска, выкладывается снова");
+
+                // Выбор заново: прежняя картинка уходит, чужой файл остаётся
+                s.Reopen(s.Done.First(d => d.Id == "char_dasha_hub"));
+                drive.Request(s.DriveFiles());
+                drive.Flush(3000);
+                Check(!DriveNames(folder).Any(n => n.Contains("char_dasha_hub")), "отменённый выбор убран с Диска");
+                Check(!Directory.Exists(Path.Combine(folder, "Персонажи", "Даша")), "пустая папка убрана");
+                Check(File.Exists(mine), "файлы, которые программа не выкладывала, не тронуты");
+                s.Decide(s.Queue[0], new[] { "char_dasha_hub__ref_2" });
+                var next = new DriveSync(manifest, folder);
+                next.Start();
+                next.Request(s.DriveFiles());
+                next.Flush(3000);
+                Check(DriveNames(folder).Contains(@"Персонажи\Даша\char_dasha_hub__ref_2_alpha.png"), "после перезапуска выкладка продолжается");
+
+                // Новая папка results не знает прошлых файлов и ничего на Диске не удаляет
+                string other = Fresh("drive2");
+                var empty = new DriveSync(Path.Combine(other, Session.DriveFileList), folder);
+                empty.Start();
+                int before = DriveNames(folder).Length;
+                empty.Request(new List<DriveFile>());
+                empty.Flush(3000);
+                Check(DriveNames(folder).Length == before, "пустой разбор ничего не удаляет");
+                Check(DriveSync.FindRoots() != null, "поиск диска не падает");
+            }
+            finally
+            {
+                TokenStore.Dir = keys;
+                DriveSync.QuietMs = quiet;
+                DriveSync.RetryMs = retry;
+            }
+        }
+
+        static void TestDriveUi()
+        {
+            int quiet = DriveSync.QuietMs;
+            DriveSync.QuietMs = 20;
+            string keys = TokenStore.Dir;
+            string root = Fresh("driveui");
+            string base_ = Path.GetDirectoryName(root);
+            TokenStore.Dir = Path.Combine(base_, "appdata");
+            Func<IWin32Window, string> realPick = ControlForm.PickDriveFolder;
+            string myDrive = Path.Combine(base_, "My Drive");
+            Directory.CreateDirectory(myDrive);
+            string folder = Path.Combine(myDrive, DriveSync.FolderName);
+            try
+            {
+                MakeJob(root, "30_char_p0", "char_dasha_hub", true, 64, 64);
+                MakeJob(root, "80_chars2", "dasha_candle", true, 64, 64);
+                var s = new Session(root);
+                s.Decide(JobOf(s, "char_dasha_hub"), new[] { "char_dasha_hub__ref_1" });
+                var form = new MainForm(s, Offline());
+                form.WindowState = FormWindowState.Normal;
+                form.StartPosition = FormStartPosition.Manual;
+                form.Location = Point.Empty;
+                form.Size = new Size(1280, 800);
+                form.Show();
+                Pump(100);
+                WaitImages(form);
+                Key(form, Keys.G);
+                Pump(120);
+                ControlForm panel = Application.OpenForms.OfType<ControlForm>().Single();
+                Func<string, FlatButton> button = text => Find<FlatButton>(panel).First(b => b.Text.StartsWith(text));
+                FlatButton connect = button("Подключить Google");
+                Check(!button("Выложить сейчас").Enabled && !button("Открыть папку на Диске").Enabled, "без подключения выкладывать нечем");
+                Check(Find<Label>(panel).Any(l => l.Text == "Не подключён"), "в пульте написано, что не подключён");
+
+                ControlForm.PickDriveFolder = owner => null;
+                RealClick(connect);
+                Check(connect.Text.StartsWith("Подключить") && !Directory.Exists(folder), "отмена в окне ничего не меняет");
+                ControlForm.PickDriveFolder = owner => folder;
+                RealClick(connect);
+                var sw = Stopwatch.StartNew();
+                while (sw.ElapsedMilliseconds < 3000 && DriveNames(folder).Length == 0) Pump(20);
+                Pump(60);
+                Check(DriveNames(folder).SequenceEqual(new[] { @"Персонажи\Даша\char_dasha_hub__ref_1_alpha.png" }), "после подключения уже выбранное выложено сразу: " + string.Join(",", DriveNames(folder)));
+                Check(connect.Text == "Сменить папку Диска" && button("Выложить сейчас").Enabled, "кнопки после подключения");
+                Check(Find<Label>(panel).Any(l => l.Text.StartsWith("Файлов на Диске: 1")), "счётчик файлов виден");
+
+                Key(form, Keys.D2);
+                Key(form, Keys.Enter);
+                sw.Restart();
+                while (sw.ElapsedMilliseconds < 3000 && DriveNames(folder).Length < 2) Pump(20);
+                Check(DriveNames(folder).Contains(@"Персонажи\Даша\dasha_candle__ref_2_alpha.png"), "новое решение выкладывается само: " + string.Join(",", DriveNames(folder)));
+                Key(form, Keys.Back);
+                sw.Restart();
+                while (sw.ElapsedMilliseconds < 3000 && DriveNames(folder).Length > 1) Pump(20);
+                Check(DriveNames(folder).Length == 1, "«Назад» убирает картинку с Диска");
+                form.Close();
+                Pump(40);
+            }
+            finally
+            {
+                ControlForm.PickDriveFolder = realPick;
+                TokenStore.Dir = keys;
+                DriveSync.QuietMs = quiet;
+            }
+        }
+
         static Session Dasha(string root)
         {
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(root), "jobs.json"),
@@ -2067,6 +2234,14 @@ if ($Mode -eq 'hang')");
                 Save(note, Path.Combine(outDir, "dlg_note.png"));
                 note.Close();
             }
+            using (var disk = new DriveDialog())
+            {
+                disk.StartPosition = FormStartPosition.CenterScreen;
+                disk.Show();
+                Pump(200);
+                Save(disk, Path.Combine(outDir, "dlg_drive.png"));
+                disk.Close();
+            }
             using (var key = new KeyDialog(null))
             {
                 key.StartPosition = FormStartPosition.CenterScreen;
@@ -2114,6 +2289,8 @@ if ($Mode -eq 'hang')");
                     Say("--- задачи и обновление");
                     TestKitTask();
                     TestUpdate();
+                    Say("--- Google Диск");
+                    TestDrive();
                     Say("--- логика");
                     TestCore();
                     Say("--- статус");
@@ -2134,6 +2311,8 @@ if ($Mode -eq 'hang')");
                     TestPanelUi();
                     Say("--- вид по уровням");
                     TestLevelsUi();
+                    Say("--- Google Диск в окне");
+                    TestDriveUi();
                     Say("--- окно");
                     TestUi();
                     Say("--- окно и отправка");

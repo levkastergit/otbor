@@ -605,6 +605,55 @@ namespace Otbor
         }
     }
 
+    class DriveDialog : DarkDialog
+    {
+        public readonly TextBox Box;
+        public readonly FlatButton Save = new FlatButton("Сохранить  [Enter]", Theme.Accent, true);
+
+        // Пользователь может указать и сам «Мой диск», и уже готовую папку спрайтов.
+        public string Target
+        {
+            get
+            {
+                string path = Box.Text.Trim().TrimEnd('\\');
+                return Path.GetFileName(path) == DriveSync.FolderName ? path : Path.Combine(path, DriveSync.FolderName);
+            }
+        }
+
+        public DriveDialog() : base("Подключение Google Диска")
+        {
+            var browse = new FlatButton("Выбрать папку", Theme.Panel, true);
+            var download = new FlatButton("Скачать Google Диск", Theme.Panel, true);
+            var cancel = new FlatButton("Отмена  [Esc]", Theme.Panel, true);
+            List<string> found = DriveSync.FindRoots();
+            AddText("Выкладка на Google Диск", Theme.Bold, Theme.Text);
+            AddText("Программа кладёт готовые картинки в папку приложения Google Диск на этом ПК, а в облако их выгружает само приложение. " +
+                    "Вход в аккаунт остаётся в приложении Google, программа пароль не видит.", Theme.Small, Theme.Dim);
+            AddText("1. Если приложения нет, нажмите «Скачать Google Диск», установите его и войдите в нужный аккаунт.\n" +
+                    "2. Укажите «Мой диск» этого аккаунта. Картинки появятся в папке «" + DriveSync.FolderName + "».", Theme.Small, Theme.Text);
+            if (found.Count > 1)
+                AddText("Найдено несколько дисков. В приложении подключено несколько аккаунтов: проверьте, что выбран нужный.", Theme.Small, Theme.Warn);
+            Box = AddBox(false);
+            AddButtons(browse, download, Save, cancel);
+            Box.TextChanged += (a, b) => Save.Enabled = Directory.Exists(Box.Text.Trim());
+            Box.Text = found.FirstOrDefault() ?? "";
+            Save.Enabled = Directory.Exists(Box.Text.Trim());
+            browse.Click += (a, b) => Browse();
+            download.Click += (a, b) => Process.Start(DriveSync.SetupUrl);
+            Save.DialogResult = DialogResult.OK;
+            cancel.DialogResult = DialogResult.Cancel;
+            AcceptButton = Save;
+            CancelButton = cancel;
+            ActiveControl = Box;
+        }
+
+        void Browse()
+        {
+            using (var dialog = new FolderBrowserDialog { Description = "Где лежит «Мой диск» нужного аккаунта?" })
+                if (dialog.ShowDialog(this) == DialogResult.OK) Box.Text = dialog.SelectedPath;
+        }
+    }
+
     // Пульт: всё, что раньше запускалось отдельными bat-файлами. Окно не модальное: пока идёт генерация, можно разбирать.
     class ControlForm : Form
     {
@@ -614,6 +663,12 @@ namespace Otbor
         public static Func<string, bool> Ask = text =>
             MessageBox.Show(text, "Отбор вариантов", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
 
+        public static Func<IWin32Window, string> PickDriveFolder = owner =>
+        {
+            using (var dialog = new DriveDialog())
+                return dialog.ShowDialog(owner) == DialogResult.OK ? dialog.Target : null;
+        };
+
         public event Action<string> StateChanged;
         public event Action TaskDone;
 
@@ -621,6 +676,8 @@ namespace Otbor
         readonly Session session;
         readonly KitTask task;
         readonly Action restart;
+        readonly DriveSync drive;
+        readonly Action upload;
         readonly FlowLayoutPanel column = new FlowLayoutPanel
         {
             Dock = DockStyle.Left,
@@ -665,6 +722,10 @@ namespace Otbor
         readonly FlatButton btnUpdate = new FlatButton("Обновить программу", Theme.Panel);
         readonly FlatButton btnStop = new FlatButton("Остановить", Theme.Panel);
         readonly FlatButton btnSheet = new FlatButton("Открыть сравнение моделей", Theme.Panel);
+        readonly Label lblDrive = new Label { Font = Theme.Small, ForeColor = Theme.Dim, AutoSize = true };
+        readonly FlatButton btnDrive = new FlatButton("", Theme.Panel);
+        readonly FlatButton btnDriveUpload = new FlatButton("Выложить сейчас", Theme.Panel);
+        readonly FlatButton btnDriveOpen = new FlatButton("Открыть папку на Диске", Theme.Panel);
         readonly CheckBox chkNew = new CheckBox
         {
             Text = "Генерировать дообученной моделью",
@@ -696,17 +757,19 @@ namespace Otbor
             get { return File.Exists(Path.Combine(kit, "scripts", "generate.ps1")); }
         }
 
-        public ControlForm(Session session, KitTask task, Action restart)
+        public ControlForm(Session session, KitTask task, Action restart, DriveSync drive, Action upload)
         {
             this.session = session;
             this.task = task;
             this.restart = restart;
+            this.drive = drive;
+            this.upload = upload;
             kit = Path.GetDirectoryName(session.Root.TrimEnd('\\'));
             Text = "Пульт FluxKit — " + kit;
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = Theme.Normal;
-            Size = new Size(1180, 830);
+            Size = new Size(1180, 960);
             MinimumSize = new Size(900, 520);
             StartPosition = FormStartPosition.CenterScreen;
 
@@ -737,6 +800,14 @@ namespace Otbor
             AddButton(btnSheet, width);
             column.Controls.Add(chkNew);
 
+            AddGroup("Google Диск");
+            lblDrive.MaximumSize = new Size(width, 0);
+            lblDrive.Margin = new Padding(0, 0, 0, 4);
+            column.Controls.Add(lblDrive);
+            AddButton(btnDrive, width);
+            AddButton(btnDriveUpload, width);
+            AddButton(btnDriveOpen, width);
+
             AddGroup("Установка");
             AddAction("Установить окружение", "Готовые шаги пропускаются.", width, () => Run("Установка", "install.ps1", ""));
 
@@ -752,6 +823,10 @@ namespace Otbor
             btnStop.Click += (a, b) => StopTask();
             btnUpdate.Click += (a, b) => StartUpdate();
             btnSheet.Click += (a, b) => OpenSheet();
+            btnDrive.Click += (a, b) => ConnectDrive();
+            btnDriveUpload.Click += (a, b) => { upload(); drive.SendNow(); };
+            btnDriveOpen.Click += (a, b) => OpenDrive();
+            drive.Changed += () => OnUi(ShowState);
             chkNew.CheckedChanged += (a, b) => SaveModelChoice();
             task.Line += text => OnUi(() => AddLine(text));
             task.Live += text => OnUi(() => ShowLive(text));
@@ -841,6 +916,11 @@ namespace Otbor
             btnSheet.Enabled = File.Exists(SheetPath);
             chkNew.Enabled = File.Exists(SheetPath);
             lblRegen.Text = "На перегенерацию отмечено: " + session.RegenCount;
+            lblDrive.Text = drive.Label;
+            lblDrive.ForeColor = drive.Problem != null ? Theme.Warn : Theme.Dim;
+            btnDrive.Text = drive.Folder == null ? "Подключить Google Диск" : "Сменить папку Диска";
+            btnDriveUpload.Enabled = drive.Folder != null && !drive.Busy;
+            btnDriveOpen.Enabled = drive.Folder != null && Directory.Exists(drive.Folder);
             Action<string> handler = StateChanged;
             if (handler != null) handler(task.Running ? "Пульт: " + title + "  [G]" : "Пульт  [G]");
         }
@@ -991,6 +1071,28 @@ namespace Otbor
             });
         }
 
+        void ConnectDrive()
+        {
+            string folder = PickDriveFolder(this);
+            if (folder == null) return;
+            try
+            {
+                drive.SetFolder(folder);
+            }
+            catch (Exception e)
+            {
+                lblStatus.Text = "Папка не сохранена: " + e.Message;
+                return;
+            }
+            upload();
+            drive.SendNow();
+        }
+
+        void OpenDrive()
+        {
+            if (Directory.Exists(drive.Folder)) Process.Start("explorer.exe", "\"" + drive.Folder + "\"");
+        }
+
         void OpenSheet()
         {
             if (File.Exists(SheetPath)) Process.Start(SheetPath);
@@ -1068,6 +1170,7 @@ namespace Otbor
         ReviewState review;
         Section returnTo;
         readonly KitTask kitTask = new KitTask();
+        readonly DriveSync drive;
         ControlForm panel;
 
         Job Current
@@ -1094,6 +1197,8 @@ namespace Otbor
             this.session = session;
             this.sync = sync;
             AskNote = ShowNoteDialog;
+            drive = new DriveSync(session.Abs(Session.DriveFileList), DriveSync.LoadFolder());
+            drive.Start();
             Text = "Отбор вариантов " + KitUpdate.Current + " — " + session.Root;
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
@@ -1207,6 +1312,12 @@ namespace Otbor
         public void PushStatus()
         {
             sync.Request(session.BuildStatus(), session.Queue.Count);
+            PushDrive();
+        }
+
+        void PushDrive()
+        {
+            drive.Request(session.DriveFiles());
         }
 
         public void GitClicked()
@@ -1243,6 +1354,7 @@ namespace Otbor
             }
             if (e.Cancel) return;
             if (panel != null) panel.ForceClose();
+            if (drive.HasUnsent) drive.Flush(8000);
             if (!sync.HasUnsent) return;
             Text = "Отправляю разбор на GitHub…";
             Cursor = Cursors.WaitCursor;
@@ -1307,7 +1419,7 @@ namespace Otbor
         {
             if (panel == null)
             {
-                panel = new ControlForm(session, kitTask, Restart);
+                panel = new ControlForm(session, kitTask, Restart, drive, PushDrive);
                 panel.StateChanged += text => btnPanel.Text = text;
                 panel.TaskDone += AfterKitTask;
             }

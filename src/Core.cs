@@ -248,6 +248,7 @@ namespace Otbor
         public const string JournalFile = "_отбор.json";
         public const string StatusFile = "_статус.json";
         public const string ViewFile = "_вид.txt";
+        public const string DriveFileList = "_диск.json";
         public const string ChoiceFile = "выбор.csv";
         public const string RegenFile = "перегенерировать.txt";
 
@@ -624,16 +625,41 @@ namespace Otbor
                 string ru = i != null ? i.Ru : null;
                 if (d.None) items.Add(new ReviewItem { Decision = d, Ru = ru });
                 foreach (string name in d.Picked)
-                {
-                    var variant = new Variant { Name = name };
-                    foreach (FileMove m in d.Moves.Where(x => VariantName(x.From).Equals(name, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        if (IsCut(m.From)) variant.Cut = m.To; else variant.Raw = m.To;
-                    }
-                    items.Add(new ReviewItem { Decision = d, Ru = ru, Variant = variant });
-                }
+                    items.Add(new ReviewItem { Decision = d, Ru = ru, Variant = PickedVariant(d, name) });
             }
             return items;
+        }
+
+        static Variant PickedVariant(Decision d, string name)
+        {
+            var variant = new Variant { Name = name };
+            foreach (FileMove m in d.Moves.Where(x => VariantName(x.From).Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                if (IsCut(m.From)) variant.Cut = m.To; else variant.Raw = m.To;
+            }
+            return variant;
+        }
+
+        // Для Диска: вырезанный спрайт, а если его нет (фоны), сама картинка. Папки — разделы, а не служебные группы.
+        public List<DriveFile> DriveFiles()
+        {
+            var files = new List<DriveFile>();
+            foreach (Decision d in Latest().Where(x => !x.None))
+            {
+                Section section = SectionMap.Of(d.Id).Section;
+                string folder = Path.Combine(SafeName(section.Kind), SafeName(section.Name));
+                foreach (string name in d.Picked)
+                {
+                    string rel = PickedVariant(d, name).Show;
+                    if (rel != null) files.Add(new DriveFile { Source = Abs(rel), Target = Path.Combine(folder, Path.GetFileName(rel)) });
+                }
+            }
+            return files;
+        }
+
+        static string SafeName(string name)
+        {
+            return string.Join("_", name.Split(Path.GetInvalidFileNameChars())).TrimEnd('.', ' ');
         }
 
         public List<SectionStat> Stats()
