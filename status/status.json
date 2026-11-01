@@ -1,5 +1,5 @@
 {
- "summary": {"ready":25,"regen":2,"left":660},
+ "summary": {"ready":28,"regen":2,"left":657},
  "jobs": [
   {"id":"ui_panel_bottom","group":"10_ui_search","ru":"Нижняя панель экрана поиска (ПРОБА СТИЛЯ UI)","state":"ready","picked":["ui_panel_bottom__ref_3"],"tried":["ui_panel_bottom__ref_1","ui_panel_bottom__ref_2","ui_panel_bottom__ref_3","ui_panel_bottom__ref_4"],"note":null,"at":"2026-11-01 15:51:12","pc":"87da46b4"},
   {"id":"ui_panel_tasklist","group":"10_ui_search","ru":"Вертикальная панель списка задач","state":"ready","picked":["ui_panel_tasklist__ref_3"],"tried":["ui_panel_tasklist__ref_1","ui_panel_tasklist__ref_2","ui_panel_tasklist__ref_3","ui_panel_tasklist__ref_4"],"note":null,"at":"2026-11-01 15:51:20","pc":"87da46b4"},
@@ -26,7 +26,10 @@
   {"id":"masha_woken_bed","group":"80_chars2","ru":"Маша проснулась (сидит в кровати, маска на лбу)","state":"ready","picked":["masha_woken_bed__ref_1","masha_woken_bed__ref_4"],"tried":["masha_woken_bed__ref_1","masha_woken_bed__ref_2","masha_woken_bed__ref_3","masha_woken_bed__ref_4","masha_woken_bed__t2i_1","masha_woken_bed__t2i_2","masha_woken_bed__t2i_3","masha_woken_bed__t2i_4"],"note":null,"at":"2026-11-01 16:17:43","pc":"87da46b4"},
   {"id":"night_mas","group":"80_chars2","ru":"Маша сонная в пижаме (Ф2)","state":"regen","picked":[],"tried":["night_mas__t2i_1","night_mas__t2i_2","night_mas__t2i_3","night_mas__t2i_4"],"note":"не похоже на референс","at":"2026-11-01 16:19:03","pc":"87da46b4"},
   {"id":"night_pug","group":"80_chars2","ru":"Пуговка сонная в пижаме (Ф2)","state":"regen","picked":[],"tried":["night_pug__t2i_1","night_pug__t2i_2","night_pug__t2i_3","night_pug__t2i_4"],"note":"не похоже на референс.","at":"2026-11-01 15:54:49","pc":"87da46b4"},
+  {"id":"polezhaikin_train_belt","group":"80_chars2","ru":"Полежайкин в купе, пристёгнут ремнём (по решению)","state":"ready","picked":["polezhaikin_train_belt__ref_1","polezhaikin_train_belt__ref_2","polezhaikin_train_belt__ref_4"],"tried":["polezhaikin_train_belt__ref_1","polezhaikin_train_belt__ref_2","polezhaikin_train_belt__ref_3","polezhaikin_train_belt__ref_4","polezhaikin_train_belt__t2i_1","polezhaikin_train_belt__t2i_2","polezhaikin_train_belt__t2i_3","polezhaikin_train_belt__t2i_4"],"note":null,"at":"2026-11-01 17:42:24","pc":"87da46b4"},
   {"id":"port_babushka","group":"81_ports2","ru":"Портрет бабушки","state":"ready","picked":["port_babushka__ref_4"],"tried":["port_babushka__ref_1","port_babushka__ref_2","port_babushka__ref_3","port_babushka__ref_4"],"note":null,"at":"2026-11-01 17:41:22","pc":"87da46b4"},
-  {"id":"port_misha","group":"81_ports2","ru":"Портрет Миши","state":"ready","picked":["port_misha__ref_1"],"tried":["port_misha__ref_1","port_misha__ref_2","port_misha__ref_3","port_misha__ref_4"],"note":null,"at":"2026-11-01 17:41:44","pc":"87da46b4"}
+  {"id":"port_misha","group":"81_ports2","ru":"Портрет Миши","state":"ready","picked":["port_misha__ref_1"],"tried":["port_misha__ref_1","port_misha__ref_2","port_misha__ref_3","port_misha__ref_4"],"note":null,"at":"2026-11-01 17:41:44","pc":"87da46b4"},
+  {"id":"port_polezhaikin","group":"81_ports2","ru":"Портрет Полежайкина","state":"ready","picked":["port_polezhaikin__ref_1"],"tried":["port_polezhaikin__ref_1","port_polezhaikin__ref_2","port_polezhaikin__ref_3","port_polezhaikin__ref_4"],"note":null,"at":"2026-11-01 17:42:29","pc":"87da46b4"},
+  {"id":"port_posetitel","group":"81_ports2","ru":"Портрет посетителя кафе","state":"ready","picked":["port_posetitel__ref_2"],"tried":["port_posetitel__ref_1","port_posetitel__ref_2","port_posetitel__ref_3","port_posetitel__ref_4"],"note":null,"at":"2026-11-01 17:42:17","pc":"87da46b4"}
  ]
 }
