@@ -1,5 +1,5 @@
 {
- "summary": {"ready":115,"regen":2,"left":570},
+ "summary": {"ready":117,"regen":2,"left":568},
  "jobs": [
   {"id":"ui_panel_bottom","group":"10_ui_search","ru":"Нижняя панель экрана поиска (ПРОБА СТИЛЯ UI)","state":"ready","picked":["ui_panel_bottom__ref_3"],"tried":["ui_panel_bottom__ref_1","ui_panel_bottom__ref_2","ui_panel_bottom__ref_3","ui_panel_bottom__ref_4"],"note":null,"at":"2026-11-01 15:51:12","pc":"87da46b4"},
   {"id":"ui_panel_tasklist","group":"10_ui_search","ru":"Вертикальная панель списка задач","state":"ready","picked":["ui_panel_tasklist__ref_3"],"tried":["ui_panel_tasklist__ref_1","ui_panel_tasklist__ref_2","ui_panel_tasklist__ref_3","ui_panel_tasklist__ref_4"],"note":null,"at":"2026-11-01 15:51:20","pc":"87da46b4"},
@@ -100,6 +100,7 @@
   {"id":"mg_code_moon","group":"85_mg","ru":"Кодовый замок: луна","state":"ready","picked":["mg_code_moon__t2i_2"],"tried":["mg_code_moon__t2i_1","mg_code_moon__t2i_2","mg_code_moon__t2i_3","mg_code_moon__t2i_4"],"note":null,"at":"2026-11-01 17:51:43","pc":"87da46b4"},
   {"id":"mg_code_star","group":"85_mg","ru":"Кодовый замок: звезда","state":"ready","picked":["mg_code_star__t2i_2"],"tried":["mg_code_star__t2i_1","mg_code_star__t2i_2","mg_code_star__t2i_3","mg_code_star__t2i_4"],"note":null,"at":"2026-11-01 17:51:41","pc":"87da46b4"},
   {"id":"mg_code_sun","group":"85_mg","ru":"Кодовый замок: солнце","state":"ready","picked":["mg_code_sun__t2i_2"],"tried":["mg_code_sun__t2i_1","mg_code_sun__t2i_2","mg_code_sun__t2i_3","mg_code_sun__t2i_4"],"note":null,"at":"2026-11-01 17:51:45","pc":"87da46b4"},
+  {"id":"mg_cross_page","group":"85_mg","ru":"Кроссворд: страница","state":"ready","picked":["mg_cross_page__ref_1"],"tried":["mg_cross_page__ref_1","mg_cross_page__ref_2","mg_cross_page__ref_3","mg_cross_page__ref_4"],"note":null,"at":"2026-11-01 18:02:16","pc":"87da46b4"},
   {"id":"mg_key_1","group":"85_mg","ru":"Связка ключей: ключ 1","state":"ready","picked":["mg_key_1__t2i_2"],"tried":["mg_key_1__t2i_1","mg_key_1__t2i_2","mg_key_1__t2i_3","mg_key_1__t2i_4"],"note":null,"at":"2026-11-01 17:51:06","pc":"87da46b4"},
   {"id":"mg_key_2","group":"85_mg","ru":"Связка ключей: ключ 2","state":"ready","picked":["mg_key_2__t2i_2"],"tried":["mg_key_2__t2i_1","mg_key_2__t2i_2","mg_key_2__t2i_3","mg_key_2__t2i_4"],"note":null,"at":"2026-11-01 17:51:08","pc":"87da46b4"},
   {"id":"mg_key_3","group":"85_mg","ru":"Связка ключей: ключ 3","state":"ready","picked":["mg_key_3__t2i_1"],"tried":["mg_key_3__t2i_1","mg_key_3__t2i_2","mg_key_3__t2i_3","mg_key_3__t2i_4"],"note":null,"at":"2026-11-01 17:51:11","pc":"87da46b4"},
@@ -117,6 +118,7 @@
   {"id":"mg_sea_ship2","group":"85_mg","ru":"Морской бой: корабль 2 палубы","state":"ready","picked":["mg_sea_ship2__t2i_1","mg_sea_ship2__t2i_3","mg_sea_ship2__t2i_4"],"tried":["mg_sea_ship2__t2i_1","mg_sea_ship2__t2i_2","mg_sea_ship2__t2i_3","mg_sea_ship2__t2i_4"],"note":null,"at":"2026-11-01 17:50:44","pc":"87da46b4"},
   {"id":"mg_sea_ship3","group":"85_mg","ru":"Морской бой: корабль 3 палубы","state":"ready","picked":["mg_sea_ship3__t2i_1"],"tried":["mg_sea_ship3__t2i_1","mg_sea_ship3__t2i_2","mg_sea_ship3__t2i_3","mg_sea_ship3__t2i_4"],"note":null,"at":"2026-11-01 17:50:47","pc":"87da46b4"},
   {"id":"mg_sea_ship4","group":"85_mg","ru":"Морской бой: корабль 4 палубы","state":"ready","picked":["mg_sea_ship4__t2i_3"],"tried":["mg_sea_ship4__t2i_1","mg_sea_ship4__t2i_2","mg_sea_ship4__t2i_3","mg_sea_ship4__t2i_4"],"note":null,"at":"2026-11-01 17:50:58","pc":"87da46b4"},
+  {"id":"mg_ward_drawer","group":"85_mg","ru":"Шкаф: ящик комода сверху","state":"ready","picked":["mg_ward_drawer__ref_1"],"tried":["mg_ward_drawer__ref_1","mg_ward_drawer__ref_2","mg_ward_drawer__ref_3","mg_ward_drawer__ref_4"],"note":null,"at":"2026-11-01 18:02:25","pc":"87da46b4"},
   {"id":"ui_codelock_ball","group":"85_mg","ru":"Символ «мяч» для кодового замка, в стиле T_MG_Code_*","state":"ready","picked":["ui_codelock_ball__t2i_1"],"tried":["ui_codelock_ball__t2i_1","ui_codelock_ball__t2i_2","ui_codelock_ball__t2i_3","ui_codelock_ball__t2i_4"],"note":null,"at":"2026-11-01 17:51:36","pc":"87da46b4"}
  ]
 }
