@@ -146,6 +146,14 @@ namespace Otbor
         public string Note;
     }
 
+    // Плитка обзора: выбранный вариант задания. Variant == null — ни один не подошёл.
+    public class ReviewItem
+    {
+        public Decision Decision;
+        public string Ru;
+        public Variant Variant;
+    }
+
     // Имена полей — формат status/status.json: его читают generate.py и Claude.
     public class StatusRow
     {
@@ -425,15 +433,19 @@ namespace Otbor
             foreach (string file in Directory.GetFiles(dir, "*.png"))
             {
                 string key = VariantName(file);
-                bool cut = key.Length < Path.GetFileNameWithoutExtension(file).Length;
                 Variant v;
                 if (!byName.TryGetValue(key, out v)) byName[key] = v = new Variant { Name = key };
                 string rel = Path.Combine(group, id, Path.GetFileName(file));
-                if (cut) v.Cut = rel; else v.Raw = rel;
+                if (IsCut(file)) v.Cut = rel; else v.Raw = rel;
             }
             job.Variants = byName.Values.ToList();
             job.Variants.Sort((a, b) => StrCmpLogicalW(a.Name, b.Name));
             return job;
+        }
+
+        static bool IsCut(string file)
+        {
+            return VariantName(file).Length < Path.GetFileNameWithoutExtension(file).Length;
         }
 
         static string VariantName(string file)
@@ -487,8 +499,13 @@ namespace Otbor
 
         public Decision Undo()
         {
-            if (Done.Count == 0) return null;
-            Decision d = Done[Done.Count - 1];
+            return Done.Count == 0 ? null : Reopen(Done[Done.Count - 1]);
+        }
+
+        // Отменяет решение из любого места журнала: файлы возвращаются в папку задания, оно становится первым в очереди.
+        public Decision Reopen(Decision d)
+        {
+            int index = Done.IndexOf(d);
             var restored = new List<FileMove>();
             try
             {
@@ -498,16 +515,18 @@ namespace Otbor
                     Move(Abs(m.To), Abs(m.From));
                     restored.Add(m);
                 }
-                Done.RemoveAt(Done.Count - 1);
+                Done.RemoveAt(index);
                 SaveJournal();
             }
             catch
             {
-                if (!Done.Contains(d)) Done.Add(d);
+                if (!Done.Contains(d)) Done.Insert(index, d);
                 foreach (FileMove m in restored) Move(Abs(m.From), Abs(m.To));
                 throw;
             }
             foreach (FileMove m in d.Moves) RemoveEmptyDirs(Path.GetDirectoryName(m.To));
+            // После перегенерации в очереди уже могут ждать новые варианты этого задания.
+            Queue.RemoveAll(j => j.Group == d.Group && j.Id == d.Id);
             Queue.Insert(0, BuildJob(d.Group, d.Id));
             WriteOutputs();
             return d;
@@ -533,6 +552,29 @@ namespace Otbor
             Queue.RemoveRange(0, first);
             Queue.AddRange(before);
             return true;
+        }
+
+        // Решения раздела в порядке очереди. Файлы берутся из журнала: имя могло получить суффикс при совпадении.
+        public List<ReviewItem> Review(Section section)
+        {
+            var items = new List<ReviewItem>();
+            foreach (Decision d in Ordered().Where(x => SectionMap.Of(x.Id).Section == section))
+            {
+                Info i;
+                info.TryGetValue(d.Id, out i);
+                string ru = i != null ? i.Ru : null;
+                if (d.None) items.Add(new ReviewItem { Decision = d, Ru = ru });
+                foreach (string name in d.Picked)
+                {
+                    var variant = new Variant { Name = name };
+                    foreach (FileMove m in d.Moves.Where(x => VariantName(x.From).Equals(name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (IsCut(m.From)) variant.Cut = m.To; else variant.Raw = m.To;
+                    }
+                    items.Add(new ReviewItem { Decision = d, Ru = ru, Variant = variant });
+                }
+            }
+            return items;
         }
 
         public List<SectionStat> Stats()
@@ -638,13 +680,7 @@ namespace Otbor
         {
             try
             {
-                var ordered = Latest()
-                    .OrderBy(d => SectionMap.Of(d.Id).Section.Index)
-                    .ThenBy(d => SectionMap.Of(d.Id).Order)
-                    .ThenBy(d => d.Group, Comparer<string>.Create(StrCmpLogicalW))
-                    .ThenBy(d => OrderOf(d.Id))
-                    .ThenBy(d => d.Id, Comparer<string>.Create(StrCmpLogicalW))
-                    .ToList();
+                List<Decision> ordered = Ordered();
 
                 var choice = new StringBuilder("Раздел;Что это;Куда идёт;Ассет;Группа;Задание;Выбранные варианты\r\n");
                 foreach (Decision d in ordered.Where(x => !x.None))
@@ -680,6 +716,18 @@ namespace Otbor
             {
                 Warning = "Списки не обновились: " + e.Message;
             }
+        }
+
+        List<Decision> Ordered()
+        {
+            Comparer<string> logical = Comparer<string>.Create(StrCmpLogicalW);
+            return Latest()
+                .OrderBy(d => SectionMap.Of(d.Id).Section.Index)
+                .ThenBy(d => SectionMap.Of(d.Id).Order)
+                .ThenBy(d => d.Group, logical)
+                .ThenBy(d => OrderOf(d.Id))
+                .ThenBy(d => d.Id, logical)
+                .ToList();
         }
 
         int OrderOf(string id)

@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -78,6 +79,8 @@ namespace Otbor
         public bool Marked;
         public Bitmap Image;
         public bool Transparent;
+        public string Title;
+        public string MarkText = "НУЖНЫЙ";
 
         public event Action<Tile> Changed;
         public event Action<Tile> Confirmed;
@@ -88,6 +91,17 @@ namespace Otbor
         bool hover;
 
         public static int CaptionHeight { get { return Theme.Bold.Height + 10; } }
+
+        public string Caption
+        {
+            get { return Number + "   " + (Title ?? V.Label) + (Marked ? "   " + MarkText : ""); }
+        }
+
+        // В обзоре подпись длинная: название позы важнее места под картинкой.
+        int CaptionSpace
+        {
+            get { return Title != null ? CaptionHeight * 2 : CaptionHeight; }
+        }
 
         public Tile(Variant v, int number)
         {
@@ -164,7 +178,7 @@ namespace Otbor
         {
             Graphics g = e.Graphics;
             int pad = 6;
-            int caption = CaptionHeight;
+            int caption = CaptionSpace;
             var area = new Rectangle(pad, pad, Width - pad * 2, Height - caption - pad);
             if (area.Width <= 0 || area.Height <= 0) return;
 
@@ -191,9 +205,9 @@ namespace Otbor
             }
 
             var captionArea = new Rectangle(pad, Height - caption, Width - pad * 2, caption);
-            string text = Number + "   " + V.Label + (Marked ? "   НУЖНЫЙ" : "");
-            TextRenderer.DrawText(g, text, Theme.Bold, captionArea, Marked ? Color.FromArgb(120, 230, 140) : Theme.Text,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            TextRenderer.DrawText(g, Caption, Theme.Bold, captionArea, Marked ? Color.FromArgb(120, 230, 140) : Theme.Text,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak |
+                TextFormatFlags.TextBoxControl | TextFormatFlags.EndEllipsis);
 
             int border = Marked ? 6 : 2;
             using (var pen = new Pen(Marked ? Theme.Accent : hover ? Theme.Dim : Theme.Line, border))
@@ -227,8 +241,7 @@ namespace Otbor
             if (area.Width <= 0 || area.Height <= 0) return;
             Painter.Background(g, area, Shown.Transparent);
             Painter.DrawScaled(g, Shown.Image, Painter.Fit(Shown.Image.Size, area));
-            string text = Shown.Number + "   " + Shown.V.Label + (Shown.Marked ? "   НУЖНЫЙ" : "") +
-                          "      ←/→ другой вариант   •   цифра — отметить   •   Esc или клик — закрыть";
+            string text = Shown.Caption + "      ←/→ другой вариант   •   цифра — отметить   •   Esc или клик — закрыть";
             TextRenderer.DrawText(g, text, Theme.Bold, new Rectangle(8, Height - caption - 4, Width - 16, caption),
                 Shown.Marked ? Color.FromArgb(120, 230, 140) : Theme.Text,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
@@ -595,6 +608,28 @@ namespace Otbor
     class MainForm : Form
     {
         const string DefaultHint = "Клик или цифра — отметить  •  двойной клик — выбрать и дальше  •  правый клик — посмотреть крупно";
+        const string ReviewHint = "Клик или цифра — отметить для сравнения  •  Enter — сравнить отмеченные  •  правый клик — крупно  •  Esc — назад";
+        const int ReviewPageSize = 12;
+
+        class ReviewState
+        {
+            public Section Section;
+            public List<ReviewItem> Items;
+            public readonly HashSet<ReviewItem> Marked = new HashSet<ReviewItem>();
+            public bool Comparing;
+            public int Page;
+            public int ListPage;
+
+            public List<ReviewItem> Shown
+            {
+                get { return Comparing ? Items.Where(i => Marked.Contains(i)).ToList() : Items; }
+            }
+
+            public int Pages
+            {
+                get { return Math.Max(1, (Shown.Count + ReviewPageSize - 1) / ReviewPageSize); }
+            }
+        }
 
         public Func<Job, string> AskNote;
 
@@ -617,12 +652,20 @@ namespace Otbor
         readonly FlatButton btnOpen = new FlatButton("Открыть папку с нужными", Theme.Panel);
         readonly FlatButton btnGit = new FlatButton("", Theme.Panel);
         readonly FlatButton btnNext = new FlatButton("Далее →  [Enter]", Theme.Accent);
+        readonly FlatButton btnReview = new FlatButton("Выбранное  [V]", Theme.Panel);
+        readonly FlatButton btnPrevPage = new FlatButton("← Страница", Theme.Panel);
+        readonly FlatButton btnNextPage = new FlatButton("Страница →", Theme.Panel);
+        readonly FlatButton btnRedo = new FlatButton("Выбрать заново  [R]", Theme.Panel);
+        readonly FlatButton btnClose = new FlatButton("Назад  [Esc]", Theme.Panel);
+        readonly FlatButton btnCompare = new FlatButton("", Theme.Accent);
         readonly List<Tile> tiles = new List<Tile>();
 
         Size aspect = new Size(1, 1);
         bool showCut = true;
         bool hintHeld;
         int loadToken;
+        ReviewState review;
+        Section returnTo;
 
         Job Current
         {
@@ -686,7 +729,11 @@ namespace Otbor
                 Padding = new Padding(8, 2, 8, 6),
                 BackColor = Theme.Panel
             };
-            buttons.Controls.AddRange(new Control[] { btnBack, btnSkip, btnNone, btnView, btnOpen, btnGit, btnNext });
+            buttons.Controls.AddRange(new Control[]
+            {
+                btnBack, btnSkip, btnNone, btnView, btnOpen, btnGit, btnReview, btnNext,
+                btnPrevPage, btnNextPage, btnRedo, btnClose, btnCompare
+            });
             lblHint.Dock = DockStyle.Bottom;
             lblHint.BackColor = Theme.Panel;
 
@@ -703,7 +750,13 @@ namespace Otbor
             btnView.Click += (a, b) => ToggleView();
             btnOpen.Click += (a, b) => OpenNeeded();
             btnGit.Click += (a, b) => GitClicked();
-            sections.Picked += JumpTo;
+            btnReview.Click += (a, b) => ShowPicked();
+            btnPrevPage.Click += (a, b) => TurnPage(-1);
+            btnNextPage.Click += (a, b) => TurnPage(1);
+            btnRedo.Click += (a, b) => Redo();
+            btnClose.Click += (a, b) => CloseReview();
+            btnCompare.Click += (a, b) => ToggleCompare();
+            sections.Picked += SectionClicked;
             sync.Changed += OnSyncChanged;
             Shown += (a, b) => ShowSync();
 
@@ -726,7 +779,8 @@ namespace Otbor
         {
             btnGit.Text = sync.Label;
             btnGit.ForeColor = sync.Detail != null || sync.NeedsKey ? Theme.Warn : Theme.Text;
-            if (session.Warning == null && !hintHeld) SetHint(sync.Detail ?? DefaultHint, sync.Detail != null);
+            if (session.Warning == null && !hintHeld)
+                SetHint(sync.Detail ?? (review != null ? ReviewHint : DefaultHint), sync.Detail != null);
         }
 
         public void PushStatus()
@@ -788,6 +842,7 @@ namespace Otbor
             int number = -1;
             if (key >= Keys.D0 && key <= Keys.D9) number = key - Keys.D0;
             if (key >= Keys.NumPad0 && key <= Keys.NumPad9) number = key - Keys.NumPad0;
+            if (review != null) return HandleReviewKey(key, number);
             if (number == 0)
             {
                 NoneFit();
@@ -805,29 +860,51 @@ namespace Otbor
                 case Keys.Back: Back(); return true;
                 case Keys.S: Skip(); return true;
                 case Keys.A: ToggleView(); return true;
+                case Keys.V: ShowPicked(); return true;
+            }
+            return false;
+        }
+
+        bool HandleReviewKey(Keys key, int number)
+        {
+            if (number >= 0)
+            {
+                if (number > 0 && number <= tiles.Count) tiles[number - 1].Toggle();
+                return true;
+            }
+            switch (key)
+            {
+                case Keys.Enter:
+                case Keys.Space: ToggleCompare(); return true;
+                case Keys.Escape:
+                case Keys.V: CloseReview(); return true;
+                case Keys.Left:
+                case Keys.PageUp: TurnPage(-1); return true;
+                case Keys.Right:
+                case Keys.PageDown: TurnPage(1); return true;
+                case Keys.R: Redo(); return true;
+                case Keys.A: ToggleView(); return true;
             }
             return false;
         }
 
         void ShowCurrent(ICollection<string> marked)
         {
+            review = null;
+            SetReviewMode(false);
             CloseZoom();
             ClearTiles();
             Job job = Current;
             int done = session.Done.Count;
             int total = session.Total;
-            strip.Value = total > 0 ? done / (float)total : 1f;
-            strip.Invalidate();
-            List<SectionStat> stats = session.Stats();
-            sections.SetData(stats, job != null ? job.Section : null);
-            lblProgress.Text = SectionText(job, stats) + "Разобрано " + done + " из " + total +
-                               "  •  осталось " + session.Queue.Count + "  •  на перегенерацию: " + session.RegenCount;
+            ShowProgress(job, job != null ? job.Section : null);
             hintHeld = false;
             string problem = session.Warning ?? sync.Detail;
             SetHint(problem ?? DefaultHint, problem != null);
             btnBack.Enabled = done > 0;
             btnNext.Enabled = btnSkip.Enabled = btnNone.Enabled = btnView.Enabled = job != null;
             btnOpen.Enabled = Directory.Exists(session.Abs(Session.NeedDir));
+            btnReview.Enabled = done > 0;
             btnView.Text = (showCut ? "Показать как есть" : "Показать вырезанные") + "  [A]";
 
             lblFinished.Visible = job == null;
@@ -850,7 +927,7 @@ namespace Otbor
             if (!string.IsNullOrEmpty(job.Asset)) details.Add(job.Asset);
             lblInfo.Text = string.Join("  •  ", details);
 
-            aspect = CanvasSize(job);
+            aspect = CanvasSize(job.Variants[0]);
             int number = 1;
             foreach (Variant v in job.Variants)
             {
@@ -873,16 +950,179 @@ namespace Otbor
             return job.Section.Kind + ": " + job.Section.Name + ", " + (stat.Done + 1) + " из " + stat.Total + "   |   ";
         }
 
+        void ShowProgress(Job job, Section highlighted)
+        {
+            int done = session.Done.Count;
+            int total = session.Total;
+            strip.Value = total > 0 ? done / (float)total : 1f;
+            strip.Invalidate();
+            List<SectionStat> stats = session.Stats();
+            sections.SetData(stats, highlighted);
+            lblProgress.Text = SectionText(job, stats) + "Разобрано " + done + " из " + total +
+                               "  •  осталось " + session.Queue.Count + "  •  на перегенерацию: " + session.RegenCount;
+        }
+
+        // В разобранном разделе нечего разбирать, поэтому клик по нему открывает обзор.
+        void SectionClicked(Section section)
+        {
+            if (session.Queue.Any(j => j.Section == section)) JumpTo(section);
+            else if (review == null || review.Section != section) OpenReview(section);
+        }
+
         void JumpTo(Section section)
         {
-            if (Current != null && Current.Section == section) return;
-            if (session.JumpTo(section))
+            if (review == null && Current.Section == section) return;
+            returnTo = null;
+            session.JumpTo(section);
+            ShowCurrent(null);
+        }
+
+        // Сразу после конца раздела текущим уже стал следующий, поэтому открывается раздел последнего решения.
+        void ShowPicked()
+        {
+            Job job = Current;
+            if (job != null && session.Review(job.Section).Count > 0) OpenReview(job.Section);
+            else if (session.Done.Count > 0) OpenReview(SectionMap.Of(session.Done[session.Done.Count - 1].Id).Section);
+            else
             {
-                ShowCurrent(null);
+                hintHeld = true;
+                SetHint("Пока нечего смотреть: ни одно задание не разобрано.", true);
+            }
+        }
+
+        void OpenReview(Section section)
+        {
+            returnTo = null;
+            review = new ReviewState { Section = section, Items = session.Review(section) };
+            ShowReview();
+        }
+
+        void SetReviewMode(bool on)
+        {
+            foreach (Control c in new Control[] { btnBack, btnSkip, btnNone, btnOpen, btnReview, btnNext }) c.Visible = !on;
+            foreach (Control c in new Control[] { btnRedo, btnClose, btnCompare }) c.Visible = on;
+            if (!on) btnPrevPage.Visible = btnNextPage.Visible = false;
+        }
+
+        void ShowReview()
+        {
+            CloseZoom();
+            ClearTiles();
+            SetReviewMode(true);
+            lblFinished.Visible = false;
+            ShowProgress(null, review.Section);
+            hintHeld = false;
+            string problem = session.Warning ?? sync.Detail;
+            SetHint(problem ?? ReviewHint, problem != null);
+
+            List<ReviewItem> shown = review.Shown;
+            int pages = review.Pages;
+            review.Page = Math.Min(review.Page, pages - 1);
+            btnPrevPage.Visible = btnNextPage.Visible = pages > 1;
+            btnPrevPage.Enabled = review.Page > 0;
+            btnNextPage.Enabled = review.Page < pages - 1;
+            btnCompare.Text = (review.Comparing ? "Показать все" : "Сравнить отмеченные") + "  [Enter]";
+            btnView.Enabled = true;
+            btnView.Text = (showCut ? "Показать как есть" : "Показать вырезанные") + "  [A]";
+
+            int rejected = review.Items.Count(i => i.Variant == null);
+            lblTitle.Text = (review.Comparing ? "Сравнение: " : "Выбранное: ") + review.Section.Name;
+            lblGoes.Text = "Выбрано вариантов: " + (review.Items.Count - rejected) + "  •  на перегенерации: " + rejected;
+            lblInfo.Text = review.Section.Kind + (pages > 1 ? "  •  страница " + (review.Page + 1) + " из " + pages : "");
+
+            ReviewItem picture = shown.FirstOrDefault(i => i.Variant != null);
+            aspect = picture != null ? CanvasSize(picture.Variant) : new Size(1, 1);
+            int number = 1;
+            foreach (ReviewItem item in shown.Skip(review.Page * ReviewPageSize).Take(ReviewPageSize))
+                AddReviewTile(item, number++);
+            LayoutTiles();
+            StartLoad();
+        }
+
+        void AddReviewTile(ReviewItem item, int number)
+        {
+            Variant variant = item.Variant ?? new Variant { Name = item.Decision.Id };
+            string name = Regex.Replace(item.Ru ?? item.Decision.Id, @"\s*\([^)]*\)", "");
+            var tile = new Tile(variant, number)
+            {
+                Title = item.Variant != null ? variant.Label + "   " + name : name,
+                MarkText = "✓",
+                Marked = review.Marked.Contains(item)
+            };
+            Action<Tile> remember = t =>
+            {
+                if (t.Marked) review.Marked.Add(item);
+                else review.Marked.Remove(item);
+                if (zoom.Visible) zoom.Invalidate();
+            };
+            tile.Changed += remember;
+            tile.Confirmed += remember;
+            tile.ZoomRequested += OpenZoom;
+            tiles.Add(tile);
+            grid.Controls.Add(tile);
+            if (item.Variant == null)
+            {
+                string note = item.Decision.Note;
+                tile.SetImage(null, false, "На перегенерации" + (string.IsNullOrEmpty(note) ? "" : ": " + note));
+            }
+        }
+
+        void ToggleCompare()
+        {
+            if (!review.Comparing && review.Marked.Count < 2)
+            {
+                hintHeld = true;
+                SetHint("Отметьте хотя бы два варианта: клик по картинке или цифра.", true);
                 return;
             }
+            if (review.Comparing) review.Page = review.ListPage;
+            else
+            {
+                review.ListPage = review.Page;
+                review.Page = 0;
+            }
+            review.Comparing = !review.Comparing;
+            ShowReview();
+        }
+
+        void CloseReview()
+        {
+            if (review.Comparing) ToggleCompare();
+            else ShowCurrent(null);
+        }
+
+        void TurnPage(int delta)
+        {
+            int page = review.Page + delta;
+            if (page < 0 || page >= review.Pages) return;
+            review.Page = page;
+            ShowReview();
+        }
+
+        void Redo()
+        {
+            List<Decision> chosen = review.Marked.Select(i => i.Decision).Distinct().ToList();
+            if (chosen.Count != 1)
+            {
+                hintHeld = true;
+                SetHint("Отметьте вариант одного задания: оно откроется заново со всеми вариантами.", true);
+                return;
+            }
+            Section section = review.Section;
+            try
+            {
+                session.Reopen(chosen[0]);
+            }
+            catch (Exception e)
+            {
+                ShowError("Не удалось вернуть задание.", e);
+                return;
+            }
+            PushStatus();
+            ShowCurrent(chosen[0].Picked);
+            returnTo = section;
             hintHeld = true;
-            SetHint("В разделе «" + section.Name + "» всё разобрано.", true);
+            SetHint("Выберите заново. После «Далее» откроется обзор раздела.", false);
         }
 
         protected override void OnMouseWheel(MouseEventArgs e)
@@ -891,11 +1131,10 @@ namespace Otbor
             if (sections.Bounds.Contains(PointToClient(Cursor.Position))) sections.Wheel(e.Delta);
         }
 
-        Size CanvasSize(Job job)
+        Size CanvasSize(Variant v)
         {
             try
             {
-                Variant v = job.Variants[0];
                 using (var f = OpenShared(session.Abs(v.Raw ?? v.Show)))
                 {
                     var header = new byte[24];
@@ -968,7 +1207,7 @@ namespace Otbor
         {
             if (!IsHandleCreated) return;
             int token = ++loadToken;
-            foreach (Tile tile in tiles)
+            foreach (Tile tile in tiles.Where(x => x.V.Show != null))
             {
                 Tile t = tile;
                 string rel = showCut ? t.V.Show : t.V.Raw ?? t.V.Show;
@@ -1074,11 +1313,22 @@ namespace Otbor
                 return;
             }
             PushStatus();
+            if (returnTo != null)
+            {
+                OpenReview(returnTo);
+                return;
+            }
             ShowCurrent(null);
+            if (session.Warning == null && sync.Detail == null && session.Queue.All(j => j.Section != job.Section))
+            {
+                hintHeld = true;
+                SetHint("Раздел «" + job.Section.Name + "» закончен. Посмотреть выбранное: V или клик по разделу слева.", false);
+            }
         }
 
         void Skip()
         {
+            returnTo = null;
             if (session.Queue.Count < 2)
             {
                 if (Current != null)
@@ -1094,6 +1344,7 @@ namespace Otbor
 
         void Back()
         {
+            returnTo = null;
             Decision last;
             try
             {
@@ -1111,7 +1362,7 @@ namespace Otbor
 
         void ToggleView()
         {
-            if (Current == null) return;
+            if (Current == null && review == null) return;
             showCut = !showCut;
             btnView.Text = (showCut ? "Показать как есть" : "Показать вырезанные") + "  [A]";
             CloseZoom();

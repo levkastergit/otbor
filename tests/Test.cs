@@ -399,8 +399,9 @@ namespace Otbor
                 "ни один файл не потерян: " + (CountPng(Path.Combine(root, Session.NeedDir)) + CountPng(Path.Combine(root, Session.TrashDir))));
             Key(form, Keys.Enter);
             Key(form, Keys.D1);
-            RealClick(Find<FlatButton>(form).First(b => b.Text.StartsWith("←")));
-            Check(s.Queue.Count == 1 && Tiles(form).Count == 8, "с экрана завершения можно вернуться назад");
+            RealClick(Find<FlatButton>(form).First(b => b.Text.StartsWith("← Назад")));
+            Check(s.Queue.Count == 1 && Tiles(form).Count == 8,
+                "с экрана завершения можно вернуться назад: очередь " + s.Queue.Count + ", плиток " + Tiles(form).Count);
             form.Close();
             Pump(50);
         }
@@ -426,6 +427,9 @@ namespace Otbor
             string root = Fresh("buttons");
             MakeJob(root, "40_props", "job_0", true, 64, 64);
             MakeJob(root, "40_props", "job_1", true, 64, 64);
+            MakeJob(root, "40_props", "job_2", true, 64, 64);
+            var decided = new Session(root);
+            decided.Decide(decided.Queue[0], new[] { decided.Queue[0].Id + "__ref_1" });
             foreach (int width in new[] { 900, 1024, 1280, 1366, 1920 })
             {
                 var form = new MainForm(new Session(root), Offline());
@@ -436,19 +440,27 @@ namespace Otbor
                 form.TopMost = true;
                 form.Show();
                 Pump(80);
-                var all = Find<FlatButton>(form).ToList();
-                bool ok = all.All(b =>
+                Action<string> checkButtons = mode =>
                 {
-                    Rectangle r = b.RectangleToScreen(b.ClientRectangle);
-                    var center = new Point(r.X + r.Width / 2, r.Y + r.Height / 2);
-                    return b.Visible && form.ClientRectangle.Contains(form.RectangleToClient(r)) &&
-                           (!b.Enabled || WindowFromPoint(center) == b.Handle);
-                });
-                Check(ok, "окно " + width + ": все кнопки целиком видны и нажимаются");
-                if (!ok)
-                    foreach (FlatButton b in all)
-                        Say("      " + b.Text + " " + form.RectangleToClient(b.RectangleToScreen(b.ClientRectangle)) + " попадание=" +
-                            (WindowFromPoint(b.PointToScreen(new Point(b.Width / 2, b.Height / 2))) == b.Handle));
+                    List<FlatButton> all = Find<FlatButton>(form).Where(b => b.Visible).ToList();
+                    bool ok = all.Count >= 5 && all.All(b =>
+                    {
+                        Rectangle r = b.RectangleToScreen(b.ClientRectangle);
+                        var center = new Point(r.X + r.Width / 2, r.Y + r.Height / 2);
+                        return form.ClientRectangle.Contains(form.RectangleToClient(r)) &&
+                               (!b.Enabled || WindowFromPoint(center) == b.Handle);
+                    });
+                    Check(ok, "окно " + width + ", " + mode + ": все кнопки целиком видны и нажимаются");
+                    if (!ok)
+                        foreach (FlatButton b in all)
+                            Say("      " + b.Text + " " + form.RectangleToClient(b.RectangleToScreen(b.ClientRectangle)) + " попадание=" +
+                                (WindowFromPoint(b.PointToScreen(new Point(b.Width / 2, b.Height / 2))) == b.Handle));
+                };
+                checkButtons("отбор");
+                Key(form, Keys.V);
+                Pump(40);
+                Check(Title(form).Text.StartsWith("Выбранное"), "окно " + width + ": обзор открыт");
+                checkButtons("обзор");
                 form.Close();
                 Pump(20);
             }
@@ -665,6 +677,283 @@ namespace Otbor
             SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, bar);
             Pump(20);
             Check(s.Queue[0].Section == chosen && scroll() < height, "полоса справа прокручивает и не переключает раздел: " + scroll());
+            form.Close();
+            Pump(20);
+        }
+
+        static Session Dasha(string root)
+        {
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(root), "jobs.json"),
+                "{\"note\":\"x\",\"jobs\":[{\"id\":\"char_dasha_hub\",\"ru\":\"Даша стоит, скрестив руки (совет и хаб)\"," +
+                "\"asset\":\"T_Char_Dasha_Hub\",\"group\":\"30_char_p0\"}]}", new UTF8Encoding(false));
+            foreach (string job in new[] { "30_char_p0/char_dasha_hub", "80_chars2/dasha_flashlight", "80_chars2/dasha_candle",
+                                           "31_portraits/port_dasha", "60_bg_rooms/bg_kids_room" })
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true, 200, 300);
+            }
+            return new Session(root);
+        }
+
+        static Job JobOf(Session s, string id)
+        {
+            return s.Queue.First(j => j.Id == id);
+        }
+
+        static void TestReview()
+        {
+            string root = Fresh("review");
+            var s = Dasha(root);
+            Section dasha = JobOf(s, "char_dasha_hub").Section;
+            Check(s.Review(dasha).Count == 0, "до разбора обзор пуст");
+
+            // Совпадение имён: выбранный файл получит суффикс, обзор должен показать именно его.
+            Png(Path.Combine(root, Session.NeedDir, "80_chars2", "dasha_flashlight", "dasha_flashlight__t2i_3.png"), 8, 8, Color.Red);
+            s.Decide(JobOf(s, "dasha_candle"), new string[0], "свеча не та");
+            s.Decide(JobOf(s, "char_dasha_hub"), new[] { "char_dasha_hub__ref_1", "char_dasha_hub__ref_3" });
+            s.Decide(JobOf(s, "dasha_flashlight"), new[] { "dasha_flashlight__t2i_3" });
+            s.Decide(JobOf(s, "bg_kids_room"), new[] { "bg_kids_room__ref_2" });
+
+            Action<Session, string> checkItems = (x, when) =>
+            {
+                List<ReviewItem> items = x.Review(dasha);
+                Check(string.Join(",", items.Select(i => i.Decision.Id)) == "char_dasha_hub,char_dasha_hub,dasha_flashlight,dasha_candle",
+                    when + ": порядок как в очереди, по плитке на вариант: " + string.Join(",", items.Select(i => i.Decision.Id)));
+                Check(items[0].Variant.Name == "char_dasha_hub__ref_1" && items[1].Variant.Name == "char_dasha_hub__ref_3", when + ": оба выбранных варианта");
+                Check(items.Take(3).All(i => File.Exists(x.Abs(i.Variant.Raw)) && File.Exists(x.Abs(i.Variant.Cut))),
+                    when + ": файлы выбранного находятся в _Нужные");
+                Check(items[2].Variant.Raw.EndsWith(" (2).png"), when + ": при совпадении имён взят настоящий файл: " + items[2].Variant.Raw);
+                Check(items[0].Variant.Show.EndsWith("_alpha.png"), when + ": показывается вырезанный");
+                Check(items[3].Variant == null && items[3].Decision.Note == "свеча не та", when + ": отвергнутое задание без картинки, с причиной");
+            };
+            checkItems(s, "сразу");
+            checkItems(new Session(root), "после перезапуска");
+
+            // Отмена решения из середины журнала
+            s = new Session(root);
+            Decision flashlight = s.Done.First(d => d.Id == "dasha_flashlight");
+            string others = string.Join(",", s.Done.Where(d => d != flashlight).Select(d => d.Id));
+            Decision back = s.Reopen(flashlight);
+            Check(back == flashlight && s.Queue[0].Id == "dasha_flashlight", "заново выбранное задание первое в очереди");
+            Check(s.Queue[0].Variants.Count == 8, "вернулись все 8 вариантов");
+            Check(string.Join(",", s.Done.Select(d => d.Id)) == others, "остальные решения не тронуты: " + string.Join(",", s.Done.Select(d => d.Id)));
+            Check(s.BuildStatus().All(r => r.id != "dasha_flashlight"), "запись убрана из статуса");
+            Check(File.Exists(Path.Combine(root, Session.NeedDir, "80_chars2", "dasha_flashlight", "dasha_flashlight__t2i_3.png")),
+                "чужой файл с тем же именем остался");
+            s = new Session(root);
+            Check(s.Done.Count == 3 && s.Queue.Count(j => j.Id == "dasha_flashlight") == 1, "после перезапуска состояние то же");
+            s.Decide(JobOf(s, "dasha_flashlight"), new[] { "dasha_flashlight__ref_1" });
+            Check(s.Review(dasha).Count(i => i.Decision.Id == "dasha_flashlight") == 1, "новый выбор виден в обзоре");
+
+            // Перегенерация: новые варианты уже в очереди, а отказ отменяют из обзора
+            Png(Path.Combine(root, "80_chars2", "dasha_candle", "dasha_candle__ref_5.png"), 8, 8, Color.Green);
+            s = new Session(root);
+            s.Reopen(s.Done.First(d => d.Id == "dasha_candle"));
+            Check(s.Queue.Count(j => j.Id == "dasha_candle") == 1 && s.Queue[0].Variants.Count == 9,
+                "задание в очереди одно, в нём старые и новые варианты: " + s.Queue[0].Variants.Count);
+
+            // Сбой: файл не вернуть, журнал и файлы остаются как были
+            s.Decide(s.Queue[0], new[] { "dasha_candle__ref_5" });
+            Decision hub = s.Done.First(d => d.Id == "char_dasha_hub");
+            int place = s.Done.IndexOf(hub);
+            int queued = s.Queue.Count;
+            File.WriteAllText(s.Abs(hub.Moves[0].From), "мешает");
+            bool failed = false;
+            try { s.Reopen(hub); }
+            catch (IOException) { failed = true; }
+            Check(failed, "при занятом имени отмена сообщает об ошибке");
+            Check(s.Done.IndexOf(hub) == place && s.Queue.Count == queued, "решение осталось на своём месте");
+            Check(hub.Moves.All(m => File.Exists(s.Abs(m.To))), "файлы вернулись в _Нужные и _Ненужные");
+        }
+
+        static string HeaderTitle(Form f) { return Title(f).Text; }
+
+        static void TestReviewUi()
+        {
+            string root = Fresh("reviewui");
+            var s = Dasha(root);
+            Section dasha = JobOf(s, "char_dasha_hub").Section;
+            var form = new MainForm(s, Offline());
+            string asked = null;
+            form.AskNote = j => { asked = j.Id; return "нет"; };
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            FlatButton btnReview = Find<FlatButton>(form).First(b => b.Text.StartsWith("Выбранное"));
+            Check(!btnReview.Enabled, "пока ничего не разобрано, смотреть нечего");
+            Key(form, Keys.V);
+            Check(!Find<FlatButton>(form).Any(b => b.Visible && b.Text.StartsWith("Назад")), "V без решений обзор не открывает");
+
+            Key(form, Keys.D1);
+            Key(form, Keys.D3);
+            Key(form, Keys.Enter);
+            WaitImages(form);
+            Key(form, Keys.D2);
+            Key(form, Keys.Enter);
+            WaitImages(form);
+            Key(form, Keys.D0);
+            Check(asked == "dasha_candle", "отказ в очереди: " + asked);
+            Pump(40);
+            WaitImages(form);
+            Key(form, Keys.D4);
+            Key(form, Keys.Enter);
+            Pump(40);
+            Check(s.Done.Count == 4 && s.Queue[0].Id == "bg_kids_room", "раздел разобран, очередь ушла к следующему");
+            Label hint = Find<Label>(form).First(l => l.Dock == DockStyle.Bottom);
+            Check(hint.Text.Contains("«Даша» закончен"), "подсказка, что раздел закончен: " + hint.Text);
+            WaitImages(form);
+
+            Key(form, Keys.V);
+            Pump(40);
+            Check(HeaderTitle(form) == "Выбранное: Даша", "V сразу после конца раздела открывает этот раздел: " + HeaderTitle(form));
+            Check(Tiles(form).Count == 5, "плиток столько, сколько выбрано, плюс отказ: " + Tiles(form).Count);
+            Func<Tile, bool> withPicture = t => t.V.Show != null;
+            var sw = Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < 5000 && !Tiles(form).Where(withPicture).All(t => t.Image != null)) Pump(5);
+            Check(Tiles(form).Where(withPicture).All(t => t.Image != null) && Tiles(form).Count(withPicture) == 4, "выбранные картинки загрузились");
+            Check(Tiles(form)[0].Caption.Contains("ref_1") && Tiles(form)[0].Caption.Contains("стоит") && !Tiles(form)[0].Caption.Contains("("),
+                "подпись: вариант и задание: " + Tiles(form)[0].Caption);
+            Check(Tiles(form)[3].V.Show == null && Tiles(form)[4].V.Show != null, "отказ показан плиткой без картинки на своём месте");
+            Key(form, Keys.Escape);
+            WaitImages(form);
+            Check(Find<FlatButton>(form).Any(b => b.Visible && b.Text.StartsWith("Далее")) && s.Queue[0].Id == "bg_kids_room", "Esc возвращает к отбору");
+
+            // Клик по разобранному разделу в панели
+            SectionList list = Find<SectionList>(form).Single();
+            int height = Theme.Small.Height + 8;
+            Action<int> clickRow = row =>
+            {
+                var at = (IntPtr)(((row * height + height / 2) << 16) | 40);
+                SendMessage(list.Handle, WM_LBUTTONDOWN, (IntPtr)1, at);
+                SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, at);
+                Pump(40);
+            };
+            clickRow(1);
+            Check(HeaderTitle(form) == "Выбранное: Даша", "клик по разобранному разделу открывает обзор");
+            Pump(120);
+
+            // Клавиши отбора в обзоре ничего не решают
+            int before = s.Done.Count;
+            asked = null;
+            Key(form, Keys.D0);
+            Key(form, Keys.S);
+            Key(form, Keys.Back);
+            Check(asked == null && s.Done.Count == before && s.Queue[0].Id == "bg_kids_room" && HeaderTitle(form) == "Выбранное: Даша",
+                "0, S и Backspace в обзоре ничего не меняют");
+
+            // Сравнение
+            Key(form, Keys.Enter);
+            Check(Tiles(form).Count == 5 && hint.Text.Contains("хотя бы два"), "Enter без отметок подсказывает: " + hint.Text);
+            Key(form, Keys.D1);
+            Key(form, Keys.Enter);
+            Check(Tiles(form).Count == 5, "одной отметки мало");
+            Key(form, Keys.D3);
+            Key(form, Keys.Enter);
+            Pump(120);
+            Check(Tiles(form).Count == 2 && HeaderTitle(form) == "Сравнение: Даша", "сравнение показывает две отмеченные: " + Tiles(form).Count);
+            Check(Tiles(form)[0].Bounds.Width > 300 && Tiles(form)[1].Image != null, "в сравнении картинки крупные и загружены: " + Tiles(form)[0].Bounds.Width);
+            Mouse(Tiles(form)[0], WM_RBUTTONDOWN, WM_RBUTTONUP);
+            Pump(30);
+            ZoomView zoom = Find<ZoomView>(form).Single();
+            Check(zoom.Visible, "правый клик в сравнении открывает крупно");
+            Key(form, Keys.Escape);
+            Check(!zoom.Visible && HeaderTitle(form) == "Сравнение: Даша", "Esc закрывает только крупный просмотр");
+            Key(form, Keys.Escape);
+            Pump(40);
+            Check(Tiles(form).Count == 5 && Tiles(form)[0].Marked && Tiles(form)[2].Marked, "из сравнения обратно ко всем, отметки на месте");
+
+            // Выбрать заново: двух заданий мало
+            Key(form, Keys.R);
+            Check(HeaderTitle(form) == "Выбранное: Даша" && s.Done.Count == before && hint.Text.Contains("одного задания"), "R с двумя заданиями не срабатывает");
+            Key(form, Keys.D1);
+            Key(form, Keys.R);
+            Pump(40);
+            WaitImages(form);
+            Check(s.Queue[0].Id == "dasha_flashlight" && s.Done.Count == before - 1, "R возвращает отмеченное задание: " + s.Queue[0].Id);
+            Check(Tiles(form).Count == 8 && Tiles(form).Count(t => t.Marked) == 1, "открыты все варианты, прежний выбор отмечен");
+            Check(hint.Text.Contains("Выберите заново"), "подсказка на повторный выбор");
+            Key(form, Keys.D2);
+            Key(form, Keys.D3);
+            Key(form, Keys.Enter);
+            Pump(120);
+            Check(HeaderTitle(form) == "Выбранное: Даша" && s.Done.Count == before, "после выбора возвращается обзор раздела: " + HeaderTitle(form));
+            List<ReviewItem> again = s.Review(dasha);
+            Check(again.Count == 5 && again[2].Variant.Name == "dasha_flashlight__ref_3", "в обзоре новый выбор вместо прежнего: " + again[2].Variant.Name);
+            Key(form, Keys.D4);
+            Key(form, Keys.R);
+            Pump(40);
+            WaitImages(form);
+            Check(s.Queue[0].Id == "dasha_candle" && Tiles(form).Count(t => t.Marked) == 0, "отказ тоже можно открыть заново");
+            Key(form, Keys.S);
+            Pump(40);
+            Key(form, Keys.V);
+            Pump(40);
+            Key(form, Keys.Escape);
+            Pump(40);
+            form.Close();
+            Pump(20);
+
+            // Страницы: у раздела больше 12 выбранных
+            root = Fresh("reviewpages");
+            s = Dasha(root);
+            s.Decide(JobOf(s, "char_dasha_hub"), JobOf(s, "char_dasha_hub").Variants.Select(v => v.Name).ToList());
+            s.Decide(JobOf(s, "dasha_candle"), JobOf(s, "dasha_candle").Variants.Select(v => v.Name).ToList());
+            s.Decide(JobOf(s, "dasha_flashlight"), new[] { "dasha_flashlight__ref_1" });
+            s.Decide(JobOf(s, "port_dasha"), new[] { "port_dasha__ref_1" });
+            form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            list = Find<SectionList>(form).Single();
+            clickRow(1);
+            FlatButton next = Find<FlatButton>(form).First(b => b.Text.StartsWith("Страница"));
+            Check(Tiles(form).Count == 12 && next.Visible && next.Enabled, "первая страница: 12 плиток");
+            Key(form, Keys.D1);
+            Key(form, Keys.Right);
+            Pump(40);
+            Check(Tiles(form).Count == 6 && !next.Enabled, "вторая страница: 6 плиток, дальше некуда");
+            Key(form, Keys.D6);
+            Key(form, Keys.Right);
+            Check(Tiles(form).Count == 6, "за последней страницей ничего нет");
+            Key(form, Keys.Enter);
+            Pump(120);
+            Check(Tiles(form).Count == 2, "отмеченные с разных страниц сравниваются вместе: " + Tiles(form).Count);
+            Key(form, Keys.Enter);
+            Pump(40);
+            Check(Tiles(form).Count == 6, "из сравнения обратно на ту же страницу");
+            Key(form, Keys.PageUp);
+            Pump(40);
+            Check(Tiles(form).Count == 12 && Tiles(form)[0].Marked, "PageUp, отметка на первой странице цела");
+            form.Close();
+            Pump(20);
+
+            // Всё разобрано: обзор доступен и закрывается на итоговый экран
+            root = Fresh("reviewdone");
+            MakeJob(root, "30_char_p0", "char_dasha_hub", true, 64, 64);
+            s = new Session(root);
+            form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            Key(form, Keys.D1);
+            Key(form, Keys.Enter);
+            Pump(40);
+            Check(s.Queue.Count == 0 && HeaderTitle(form) == "Готово", "всё разобрано");
+            Key(form, Keys.V);
+            Pump(120);
+            Check(HeaderTitle(form) == "Выбранное: Даша" && Tiles(form).Count == 1, "на итоговом экране V открывает обзор");
+            Key(form, Keys.A);
+            Pump(120);
+            Check(Tiles(form)[0].Image != null, "A работает и на итоговом обзоре");
+            Key(form, Keys.Escape);
+            Pump(40);
+            Check(HeaderTitle(form) == "Готово" && Tiles(form).Count == 0, "Esc возвращает итоговый экран");
             form.Close();
             Pump(20);
         }
@@ -1256,6 +1545,29 @@ namespace Otbor
             }
         }
 
+        // Снимки обзора на настоящей папке: по решению на каждое задание, затем сравнение двух отмеченных.
+        static void ReviewShots(string root, string outDir)
+        {
+            var s = new Session(root);
+            while (s.Queue.Count > 0) s.Decide(s.Queue[0], new[] { s.Queue[0].Variants[0].Name });
+            var form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1500, 900);
+            form.Show();
+            Pump(100);
+            Key(form, Keys.V);
+            Pump(400);
+            Save(form, Path.Combine(outDir, "review_all.png"));
+            Key(form, Keys.D1);
+            Key(form, Keys.D2);
+            Pump(60);
+            Save(form, Path.Combine(outDir, "review_marked.png"));
+            Key(form, Keys.Enter);
+            Pump(400);
+            Save(form, Path.Combine(outDir, "review_compare.png"));
+            form.Close();
+        }
+
         static void Dialogs(string outDir)
         {
             string root = Fresh("dialogs");
@@ -1312,6 +1624,7 @@ namespace Otbor
             if (args.Length > 0 && args[0] == "diag") { Diag(); return 0; }
             if (args.Length > 2 && args[0] == "shots") { Shots(args[1], args[2]); return 0; }
             if (args.Length > 1 && args[0] == "dialogs") { Dialogs(args[1]); return 0; }
+            if (args.Length > 2 && args[0] == "review") { ReviewShots(args[1], args[2]); return 0; }
             try
             {
                 if (args.Length > 0 && args[0] == "live")
@@ -1324,6 +1637,8 @@ namespace Otbor
                     Say("--- папки и разделы");
                     TestRoots();
                     TestSections();
+                    Say("--- обзор выбранного");
+                    TestReview();
                     Say("--- логика");
                     TestCore();
                     Say("--- статус");
@@ -1338,6 +1653,8 @@ namespace Otbor
                     }
                     Say("--- панель разделов");
                     TestSectionUi();
+                    Say("--- обзор в окне");
+                    TestReviewUi();
                     Say("--- окно");
                     TestUi();
                     Say("--- окно и отправка");
