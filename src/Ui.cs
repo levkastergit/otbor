@@ -254,6 +254,181 @@ namespace Otbor
         }
     }
 
+    // Список разделов: фокус не забирает, поэтому цифры и Enter по-прежнему управляют отбором.
+    class SectionList : Control
+    {
+        const int BarWidth = 10;
+
+        class Row
+        {
+            public string Kind;
+            public SectionStat Stat;
+        }
+
+        public event Action<Section> Picked;
+
+        readonly List<Row> rows = new List<Row>();
+        Section current;
+        int hover = -1;
+        int scroll;
+        bool dragging;
+
+        static int RowHeight { get { return Theme.Small.Height + 8; } }
+        int MaxScroll { get { return Math.Max(0, rows.Count * RowHeight - Height); } }
+        bool HasBar { get { return MaxScroll > 0; } }
+
+        public SectionList()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+            SetStyle(ControlStyles.Selectable, false);
+            BackColor = Theme.Panel;
+            Dock = DockStyle.Left;
+            Width = Theme.Small.Height * 15;
+        }
+
+        public void SetData(List<SectionStat> stats, Section now)
+        {
+            rows.Clear();
+            string kind = null;
+            foreach (SectionStat stat in stats)
+            {
+                if (stat.Section.Kind != kind)
+                {
+                    kind = stat.Section.Kind;
+                    rows.Add(new Row { Kind = kind });
+                }
+                rows.Add(new Row { Stat = stat });
+            }
+            current = now;
+            Reveal();
+            Invalidate();
+        }
+
+        // Текущий раздел всегда виден: очередь сама переходит к следующему.
+        void Reveal()
+        {
+            int i = rows.FindIndex(r => r.Stat != null && r.Stat.Section == current);
+            if (i >= 0)
+            {
+                int top = (i > 0 && rows[i - 1].Kind != null ? i - 1 : i) * RowHeight;
+                if (top < scroll) scroll = top;
+                if ((i + 1) * RowHeight > scroll + Height) scroll = (i + 1) * RowHeight - Height;
+            }
+            scroll = Math.Max(0, Math.Min(scroll, MaxScroll));
+        }
+
+        public void Wheel(int delta)
+        {
+            scroll = Math.Max(0, Math.Min(scroll - delta / 120 * RowHeight * 3, MaxScroll));
+            Invalidate();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Reveal();
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            Wheel(e.Delta);
+        }
+
+        int RowAt(int y)
+        {
+            int i = (y + scroll) / RowHeight;
+            return y >= 0 && i < rows.Count ? i : -1;
+        }
+
+        void Drag(int y)
+        {
+            scroll = Math.Max(0, Math.Min(y * MaxScroll / Math.Max(1, Height), MaxScroll));
+            Invalidate();
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left) return;
+            if (HasBar && e.X >= Width - BarWidth)
+            {
+                dragging = true;
+                Drag(e.Y);
+                return;
+            }
+            int i = RowAt(e.Y);
+            if (i >= 0 && rows[i].Stat != null && Picked != null) Picked(rows[i].Stat.Section);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            dragging = false;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (dragging)
+            {
+                Drag(e.Y);
+                return;
+            }
+            int i = RowAt(e.Y);
+            Cursor = i >= 0 && rows[i].Stat != null ? Cursors.Hand : Cursors.Default;
+            if (i != hover)
+            {
+                hover = i;
+                Invalidate();
+            }
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            hover = -1;
+            Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            int height = RowHeight;
+            int right = Width - (HasBar ? BarWidth : 0) - 8;
+            for (int i = scroll / height; i < rows.Count && i * height - scroll < Height; i++)
+            {
+                Row row = rows[i];
+                int y = i * height - scroll;
+                if (row.Kind != null)
+                {
+                    TextRenderer.DrawText(g, row.Kind.ToUpperInvariant(), Theme.Small, new Rectangle(8, y, right - 8, height),
+                        Theme.Warn, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+                    continue;
+                }
+                SectionStat stat = row.Stat;
+                bool now = stat.Section == current;
+                if (now || i == hover)
+                    using (var brush = new SolidBrush(now ? Theme.Accent : Theme.Line))
+                        g.FillRectangle(brush, 0, y, Width, height);
+                bool finished = stat.Left == 0;
+                string count = finished ? "✓ " + stat.Total : stat.Done + " / " + stat.Total;
+                Color color = now ? Color.White : finished ? Theme.Dim : Theme.Text;
+                int countWidth = TextRenderer.MeasureText(count, Theme.Small).Width;
+                TextRenderer.DrawText(g, count, Theme.Small, new Rectangle(right - countWidth, y, countWidth, height),
+                    now ? Color.White : Theme.Dim, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+                TextRenderer.DrawText(g, stat.Section.Name, Theme.Small, new Rectangle(16, y, right - countWidth - 20, height),
+                    color, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            }
+            if (!HasBar) return;
+            int thumb = Math.Max(24, Height * Height / (rows.Count * height));
+            int thumbTop = (Height - thumb) * scroll / MaxScroll;
+            using (var brush = new SolidBrush(Theme.Dim))
+                g.FillRectangle(brush, Width - BarWidth + 3, thumbTop, BarWidth - 4, thumb);
+        }
+    }
+
     class FlatButton : Button
     {
         // В диалогах кнопка должна быть selectable: иначе PerformClick по Enter и Esc молча не срабатывает.
@@ -428,8 +603,10 @@ namespace Otbor
         readonly Panel grid = new Panel();
         readonly ZoomView zoom = new ZoomView();
         readonly ProgressStrip strip = new ProgressStrip();
+        readonly SectionList sections = new SectionList();
         readonly Label lblProgress = MakeLabel(Theme.Small, Theme.Dim);
         readonly Label lblTitle = MakeLabel(Theme.Title, Theme.Text);
+        readonly Label lblGoes = MakeLabel(Theme.Normal, Color.FromArgb(120, 230, 140));
         readonly Label lblInfo = MakeLabel(Theme.Small, Theme.Dim);
         readonly Label lblHint = MakeLabel(Theme.Small, Theme.Dim);
         readonly Label lblFinished = MakeLabel(Theme.Title, Theme.Text);
@@ -494,8 +671,9 @@ namespace Otbor
             strip.Dock = DockStyle.Top;
             strip.Height = 5;
             var header = new Panel { Dock = DockStyle.Top, BackColor = Theme.Panel };
-            header.Height = strip.Height + lblProgress.Height + lblTitle.Height + lblInfo.Height + 4;
+            header.Height = strip.Height + lblProgress.Height + lblTitle.Height + lblGoes.Height + lblInfo.Height + 4;
             header.Controls.Add(lblInfo);
+            header.Controls.Add(lblGoes);
             header.Controls.Add(lblTitle);
             header.Controls.Add(lblProgress);
             header.Controls.Add(strip);
@@ -513,6 +691,7 @@ namespace Otbor
             lblHint.BackColor = Theme.Panel;
 
             Controls.Add(grid);
+            Controls.Add(sections);
             Controls.Add(lblHint);
             Controls.Add(buttons);
             Controls.Add(header);
@@ -524,6 +703,7 @@ namespace Otbor
             btnView.Click += (a, b) => ToggleView();
             btnOpen.Click += (a, b) => OpenNeeded();
             btnGit.Click += (a, b) => GitClicked();
+            sections.Picked += JumpTo;
             sync.Changed += OnSyncChanged;
             Shown += (a, b) => ShowSync();
 
@@ -638,8 +818,10 @@ namespace Otbor
             int total = session.Total;
             strip.Value = total > 0 ? done / (float)total : 1f;
             strip.Invalidate();
-            lblProgress.Text = "Разобрано " + done + " из " + total + "  •  осталось " + session.Queue.Count +
-                               "  •  на перегенерацию: " + session.RegenCount;
+            List<SectionStat> stats = session.Stats();
+            sections.SetData(stats, job != null ? job.Section : null);
+            lblProgress.Text = SectionText(job, stats) + "Разобрано " + done + " из " + total +
+                               "  •  осталось " + session.Queue.Count + "  •  на перегенерацию: " + session.RegenCount;
             hintHeld = false;
             string problem = session.Warning ?? sync.Detail;
             SetHint(problem ?? DefaultHint, problem != null);
@@ -652,6 +834,7 @@ namespace Otbor
             if (job == null)
             {
                 lblTitle.Text = "Готово";
+                lblGoes.Text = "";
                 lblInfo.Text = session.Root;
                 lblFinished.Text = total == 0
                     ? "В этой папке нет вариантов для отбора."
@@ -662,9 +845,9 @@ namespace Otbor
             }
 
             lblTitle.Text = string.IsNullOrEmpty(job.Ru) ? job.Id : job.Ru;
+            lblGoes.Text = string.IsNullOrEmpty(job.Goes) ? "" : "Куда идёт: " + job.Goes;
             var details = new List<string> { job.Id, job.Group };
             if (!string.IsNullOrEmpty(job.Asset)) details.Add(job.Asset);
-            if (!string.IsNullOrEmpty(job.Where)) details.Add(job.Where);
             lblInfo.Text = string.Join("  •  ", details);
 
             aspect = CanvasSize(job);
@@ -681,6 +864,31 @@ namespace Otbor
             }
             LayoutTiles();
             StartLoad();
+        }
+
+        static string SectionText(Job job, List<SectionStat> stats)
+        {
+            if (job == null) return "";
+            SectionStat stat = stats.First(s => s.Section == job.Section);
+            return job.Section.Kind + ": " + job.Section.Name + ", " + (stat.Done + 1) + " из " + stat.Total + "   |   ";
+        }
+
+        void JumpTo(Section section)
+        {
+            if (Current != null && Current.Section == section) return;
+            if (session.JumpTo(section))
+            {
+                ShowCurrent(null);
+                return;
+            }
+            hintHeld = true;
+            SetHint("В разделе «" + section.Name + "» всё разобрано.", true);
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            if (sections.Bounds.Contains(PointToClient(Cursor.Position))) sections.Wheel(e.Delta);
         }
 
         Size CanvasSize(Job job)
@@ -982,13 +1190,11 @@ namespace Otbor
 
         static string FindResults(string[] args)
         {
-            if (args.Length > 0 && Directory.Exists(args[0])) return args[0];
-            string here = AppDomain.CurrentDomain.BaseDirectory;
-            if (Session.LooksLikeResults(here)) return here;
-            string nested = Path.Combine(here, "results");
-            if (Session.LooksLikeResults(nested)) return nested;
+            bool asked = args.Length > 0 && Directory.Exists(args[0]);
+            string found = Session.ResultsOf(asked ? args[0] : AppDomain.CurrentDomain.BaseDirectory);
+            if (found != null) return found;
             using (var dialog = new FolderBrowserDialog { Description = "Где лежит папка results?" })
-                return dialog.ShowDialog() == DialogResult.OK ? dialog.SelectedPath : null;
+                return dialog.ShowDialog() == DialogResult.OK ? Session.ResultsOf(dialog.SelectedPath) ?? dialog.SelectedPath : null;
         }
     }
 }

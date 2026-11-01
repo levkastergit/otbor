@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -44,8 +45,88 @@ namespace Otbor
         public string Ru;
         public string Where;
         public string Asset;
+        public string Goes;
+        public Section Section = SectionMap.Other;
+        public int SectionOrder;
         public int Order = int.MaxValue;
         public List<Variant> Variants = new List<Variant>();
+    }
+
+    public class Section
+    {
+        public string Kind;
+        public string Name;
+        public int Index;
+    }
+
+    public class SectionStat
+    {
+        public Section Section;
+        public int Total;
+        public int Left;
+
+        public int Done
+        {
+            get { return Total - Left; }
+        }
+    }
+
+    // Формат data/sections.json: файл собирает tools/build_sections.py, в программу он вшит ресурсом.
+    public class SectionFile
+    {
+        public List<SectionEntry> sections;
+    }
+
+    public class SectionEntry
+    {
+        public string kind;
+        public string name;
+        public List<SectionJob> jobs;
+    }
+
+    public class SectionJob
+    {
+        public string id;
+        public string goes;
+    }
+
+    public class Placement
+    {
+        public Section Section = SectionMap.Other;
+        public int Order;
+        public string Goes;
+    }
+
+    public static class SectionMap
+    {
+        public static readonly Section Other = new Section { Kind = "Прочее", Name = "Без раздела", Index = int.MaxValue };
+
+        static readonly Dictionary<string, Placement> places = Load();
+
+        static Dictionary<string, Placement> Load()
+        {
+            var map = new Dictionary<string, Placement>(StringComparer.OrdinalIgnoreCase);
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("sections.json"))
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var file = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Deserialize<SectionFile>(reader.ReadToEnd());
+                int index = 0;
+                foreach (SectionEntry entry in file.sections)
+                {
+                    var section = new Section { Kind = entry.kind, Name = entry.name, Index = index++ };
+                    int order = 0;
+                    foreach (SectionJob job in entry.jobs)
+                        map[job.id] = new Placement { Section = section, Order = order++, Goes = job.goes };
+                }
+            }
+            return map;
+        }
+
+        public static Placement Of(string id)
+        {
+            Placement place;
+            return places.TryGetValue(id, out place) ? place : new Placement();
+        }
     }
 
     public class FileMove
@@ -176,6 +257,8 @@ namespace Otbor
         public Session(string root)
         {
             Root = Path.GetFullPath(root);
+            // Обучающие наборы в datasets и refs выглядят как задания, и отбор разнёс бы их по папкам.
+            if (IsKit(Root)) throw new InvalidOperationException("Это папка FluxKit, а варианты лежат в её подпапке results.");
             LoadInfo();
             string journal = Abs(JournalFile);
             if (File.Exists(journal))
@@ -235,6 +318,20 @@ namespace Otbor
                     pc = PcId
                 };
             }).ToList();
+        }
+
+        public static bool IsKit(string dir)
+        {
+            return File.Exists(Path.Combine(dir, "jobs.json")) ||
+                   (Directory.Exists(Path.Combine(dir, "datasets")) && Directory.Exists(Path.Combine(dir, "scripts")));
+        }
+
+        // Папка результатов для того, что запустили или выбрали: она сама или results внутри неё.
+        public static string ResultsOf(string dir)
+        {
+            if (!IsKit(dir) && LooksLikeResults(dir)) return dir;
+            string nested = Path.Combine(dir, "results");
+            return LooksLikeResults(nested) ? nested : null;
         }
 
         public static bool LooksLikeResults(string dir)
@@ -302,14 +399,17 @@ namespace Otbor
 
         static int CompareJobs(Job a, Job b)
         {
-            int c = StrCmpLogicalW(a.Group, b.Group);
+            int c = a.Section.Index.CompareTo(b.Section.Index);
+            if (c == 0) c = a.SectionOrder.CompareTo(b.SectionOrder);
+            if (c == 0) c = StrCmpLogicalW(a.Group, b.Group);
             if (c == 0) c = a.Order.CompareTo(b.Order);
             return c != 0 ? c : StrCmpLogicalW(a.Id, b.Id);
         }
 
         Job BuildJob(string group, string id)
         {
-            var job = new Job { Group = group, Id = id };
+            Placement place = SectionMap.Of(id);
+            var job = new Job { Group = group, Id = id, Section = place.Section, SectionOrder = place.Order, Goes = place.Goes };
             Info i;
             if (info.TryGetValue(id, out i))
             {
@@ -317,6 +417,7 @@ namespace Otbor
                 job.Where = i.Where;
                 job.Asset = i.Asset;
                 job.Order = i.Order;
+                if (job.Goes == null) job.Goes = i.Where;
             }
             string dir = Abs(Path.Combine(group, id));
             if (!Directory.Exists(dir)) return job;
@@ -412,12 +513,48 @@ namespace Otbor
             return d;
         }
 
+        // Отложенное задание ждёт конца своего раздела, а если оно в разделе последнее — конца очереди.
         public void Skip()
         {
             if (Queue.Count < 2) return;
             Job job = Queue[0];
             Queue.RemoveAt(0);
-            Queue.Add(job);
+            int last = Queue.FindLastIndex(j => j.Section == job.Section);
+            Queue.Insert(last >= 0 ? last + 1 : Queue.Count, job);
+        }
+
+        // Очередь сдвигается по кругу, поэтому после выбранного раздела идут следующие, а затем пропущенные.
+        public bool JumpTo(Section section)
+        {
+            Queue.Sort(CompareJobs);
+            int first = Queue.FindIndex(j => j.Section == section);
+            if (first < 0) return false;
+            List<Job> before = Queue.GetRange(0, first);
+            Queue.RemoveRange(0, first);
+            Queue.AddRange(before);
+            return true;
+        }
+
+        public List<SectionStat> Stats()
+        {
+            var stats = new Dictionary<Section, SectionStat>();
+            Func<Section, SectionStat> stat = section =>
+            {
+                SectionStat found;
+                if (!stats.TryGetValue(section, out found)) stats[section] = found = new SectionStat { Section = section };
+                return found;
+            };
+            var waiting = new HashSet<string>();
+            foreach (Job job in Queue)
+            {
+                waiting.Add(job.Group + "/" + job.Id);
+                SectionStat row = stat(job.Section);
+                row.Total++;
+                row.Left++;
+            }
+            foreach (Decision d in Latest())
+                if (!waiting.Contains(d.Group + "/" + d.Id)) stat(SectionMap.Of(d.Id).Section).Total++;
+            return stats.Values.OrderBy(s => s.Section.Index).ToList();
         }
 
         void MoveBack(List<FileMove> moves)
@@ -502,20 +639,24 @@ namespace Otbor
             try
             {
                 var ordered = Latest()
-                    .OrderBy(d => d.Group, Comparer<string>.Create(StrCmpLogicalW))
+                    .OrderBy(d => SectionMap.Of(d.Id).Section.Index)
+                    .ThenBy(d => SectionMap.Of(d.Id).Order)
+                    .ThenBy(d => d.Group, Comparer<string>.Create(StrCmpLogicalW))
                     .ThenBy(d => OrderOf(d.Id))
                     .ThenBy(d => d.Id, Comparer<string>.Create(StrCmpLogicalW))
                     .ToList();
 
-                var choice = new StringBuilder("Группа;Задание;Что это;Ассет;Выбранные варианты\r\n");
+                var choice = new StringBuilder("Раздел;Что это;Куда идёт;Ассет;Группа;Задание;Выбранные варианты\r\n");
                 foreach (Decision d in ordered.Where(x => !x.None))
                 {
                     Info i;
                     info.TryGetValue(d.Id, out i);
+                    Placement place = SectionMap.Of(d.Id);
                     choice.Append(string.Join(";", new[]
                     {
-                        Csv(d.Group), Csv(d.Id), Csv(i != null ? i.Ru : ""), Csv(i != null ? i.Asset : ""),
-                        Csv(string.Join(", ", d.Picked))
+                        Csv(place.Section.Kind + ": " + place.Section.Name), Csv(i != null ? i.Ru : ""),
+                        Csv(place.Goes ?? (i != null ? i.Where : "")), Csv(i != null ? i.Asset : ""),
+                        Csv(d.Group), Csv(d.Id), Csv(string.Join(", ", d.Picked))
                     })).Append("\r\n");
                 }
                 File.WriteAllText(Abs(ChoiceFile), choice.ToString(), new UTF8Encoding(true));

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -451,6 +452,221 @@ namespace Otbor
                 form.Close();
                 Pump(20);
             }
+        }
+
+        // Кит как на ПК 3: обучающие наборы лежат точно как задания (папка/папка/*.png).
+        static void TestRoots()
+        {
+            string results = Fresh("kit");
+            string kit = Path.GetDirectoryName(results);
+            Directory.CreateDirectory(Path.Combine(kit, "scripts"));
+            foreach (string sub in new[] { "datasets\\char", "datasets\\prop", "datasets\\bg", "refs\\bg", "refs\\props", "refs\\ui" })
+                Png(Path.Combine(kit, sub, "000_x.png"), 8, 8, Color.Red);
+            MakeJob(results, "30_char_p0", "char_dasha_hub", true);
+            string before = Snapshot(kit);
+
+            Check(Session.IsKit(kit), "корень кита распознан");
+            Check(Session.ResultsOf(kit) == results, "запуск из корня кита открывает results: " + Session.ResultsOf(kit));
+            Check(Session.ResultsOf(kit + "\\") == Path.Combine(kit + "\\", "results"), "то же при пути с \\ на конце");
+            Check(Session.ResultsOf(results) == results, "запуск из results открывает results");
+            bool refused = false;
+            try { new Session(kit); }
+            catch (InvalidOperationException) { refused = true; }
+            Check(refused, "корень кита нельзя открыть как папку отбора");
+            Check(Snapshot(kit) == before, "обучающие наборы и results не тронуты");
+
+            var s = new Session(Session.ResultsOf(kit));
+            Check(s.Queue.Count == 1 && s.Queue[0].Id == "char_dasha_hub", "в очереди только задания из results");
+
+            Directory.Delete(Path.Combine(results, "30_char_p0"), true);
+            Check(Session.ResultsOf(kit) == null, "кит без результатов не принят за results");
+            File.Delete(Path.Combine(kit, "jobs.json"));
+            Check(Session.IsKit(kit), "кит распознан и без jobs.json");
+            Check(Session.ResultsOf(kit) == null, "без jobs.json обучающие наборы тоже не открываются");
+        }
+
+        static readonly string[] MixedJobs =
+        {
+            "85_mg/mg_sea_sheet", "10_ui_search/ui_panel_bottom", "61_p1/p1_tights", "80_chars2/dasha_candle",
+            "78_decor/dec_kids_drawer_closed", "31_portraits/port_dasha", "99_old/unknown_job", "60_bg_rooms/bg_kids_room",
+            "30_char_p0/char_dasha_hub", "80_chars2/dasha_flashlight", "30_char_p0/char_papa_stand"
+        };
+
+        static string Ids(Session s)
+        {
+            return string.Join(",", s.Queue.Select(j => j.Id));
+        }
+
+        static void TestSections()
+        {
+            Check(SectionMap.Of("char_dasha_hub").Section.Name == "Даша", "char_dasha_hub в разделе «Даша»");
+            Check(SectionMap.Of("p1_tights").Section.Kind == "Локации" && SectionMap.Of("p1_tights").Section.Name == "Детская",
+                "предмет П1 в локации «Детская»");
+            Check(SectionMap.Of("p1_tights").Goes.Contains("Костюм принцессы"), "у предмета указан список поиска");
+            Check(SectionMap.Of("char_dasha_hub").Goes == "Семейный совет и хаб", "у позы указано, куда она идёт");
+            Check(SectionMap.Of("нет такого").Section == SectionMap.Other, "неизвестное задание попадает в «Без раздела»");
+
+            string root = Fresh("sections");
+            foreach (string job in MixedJobs)
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true);
+            }
+            var s = new Session(root);
+            Check(Ids(s) == "char_papa_stand,char_dasha_hub,dasha_flashlight,dasha_candle,port_dasha," +
+                            "bg_kids_room,dec_kids_drawer_closed,p1_tights,mg_sea_sheet,ui_panel_bottom,unknown_job",
+                "очередь по разделам: персонажи подряд, фон, декор, предметы: " + Ids(s));
+            Job dasha = s.Queue[1];
+            Check(dasha.Goes == "Семейный совет и хаб" && dasha.Section.Name == "Даша", "раздел и «куда идёт» попали в задание");
+            Check(s.Queue.Last().Goes == null, "у неизвестного задания без jobs.json нет строки «куда идёт»");
+
+            List<SectionStat> stats = s.Stats();
+            SectionStat row = stats.First(x => x.Section.Name == "Даша");
+            Check(row.Total == 4 && row.Left == 4, "счётчик раздела: всего 4");
+            Check(stats.Select(x => x.Section.Index).SequenceEqual(stats.Select(x => x.Section.Index).OrderBy(x => x)), "разделы в порядке игры");
+
+            s.Skip();
+            Check(s.Queue[0].Id == "char_dasha_hub" && s.Queue[1].Id == "dasha_flashlight", "последний в разделе откладывается в конец очереди");
+            Check(s.Queue.Last().Id == "char_papa_stand", "папа ушёл в конец");
+            s.JumpTo(s.Queue.First(j => j.Id == "char_papa_stand").Section);
+            Check(s.Queue[0].Id == "char_papa_stand" && s.Queue.Count == MixedJobs.Length, "переход к разделу, задания не потеряны");
+
+            s.JumpTo(s.Queue.First(j => j.Id == "char_dasha_hub").Section);
+            Check(s.Queue[0].Id == "char_dasha_hub", "переход к «Даша»");
+            s.Skip();
+            Check(string.Join(",", s.Queue.Take(4).Select(j => j.Id)) == "dasha_flashlight,dasha_candle,port_dasha,char_dasha_hub",
+                "отложенное задание ждёт конца своего раздела: " + Ids(s));
+
+            Section kids = s.Queue.First(j => j.Id == "p1_tights").Section;
+            Check(s.JumpTo(kids) && s.Queue[0].Id == "bg_kids_room", "переход к локации начинается с фона");
+            Check(Ids(s).EndsWith("char_papa_stand,char_dasha_hub,dasha_flashlight,dasha_candle,port_dasha"),
+                "пропущенные разделы идут после остальных: " + Ids(s));
+            Check(s.Queue.Count == MixedJobs.Length, "после переходов очередь полная");
+            s.JumpTo(s.Queue.First(j => j.Id == "dasha_candle").Section);
+            Check(s.Queue[0].Id == "char_dasha_hub", "после перехода порядок раздела исходный");
+
+            Section sectionDasha = s.Queue[0].Section;
+            while (s.Queue[0].Section == sectionDasha) s.Decide(s.Queue[0], new[] { s.Queue[0].Id + "__ref_1" });
+            Check(s.Queue[0].Id == "bg_kids_room", "раздел закончился, очередь идёт к следующему");
+            Check(!s.JumpTo(sectionDasha), "к разобранному разделу перейти нельзя");
+            row = s.Stats().First(x => x.Section.Name == "Даша");
+            Check(row.Total == 4 && row.Left == 0 && row.Done == 4, "разобранный раздел посчитан: 4 из 4");
+            string csv = File.ReadAllText(Path.Combine(root, Session.ChoiceFile), Encoding.UTF8);
+            string[] lines = csv.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            Check(lines[0].Contains("Раздел") && lines[0].Contains("Куда идёт"), "в выбор.csv есть раздел и назначение");
+            Check(lines[1].Contains("Персонажи: Даша") && lines[1].Contains("Семейный совет и хаб"), "строка выбор.csv: " + lines[1]);
+
+            Decision undone = s.Undo();
+            Check(undone.Id == "port_dasha" && s.Queue[0].Id == "port_dasha", "«Назад» возвращает задание в начало");
+            row = s.Stats().First(x => x.Section.Name == "Даша");
+            Check(row.Total == 4 && row.Left == 1, "после «Назад» счётчик верный");
+
+            // перегенерация: задание и в журнале, и снова в очереди, в счётчике оно одно
+            s.Decide(s.Queue[0], new string[0], "лицо не то");
+            MakeJob(root, "31_portraits", "port_dasha", true);
+            s = new Session(root);
+            row = s.Stats().First(x => x.Section.Name == "Даша");
+            Check(row.Total == 4 && row.Left == 1, "новые варианты после перегенерации не удваивают задание");
+        }
+
+        static void TestSectionUi()
+        {
+            string root = Fresh("sectionui");
+            foreach (string job in MixedJobs)
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true, 200, 300);
+            }
+            var s = new Session(root);
+            var form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            SectionList list = Find<SectionList>(form).Single();
+            Label goes = Find<Label>(form).First(l => l.Text.StartsWith("Куда идёт"));
+            Check(list.Visible && list.Left == 0 && list.Width < 400, "панель разделов слева");
+            Check(goes.Text == "Куда идёт: П0, обе сцены", "в шапке написано, куда идёт: " + goes.Text);
+            Check(Find<Label>(form).Any(l => l.Text.StartsWith("Персонажи: Папа, 1 из 1")), "в шапке раздел и номер в нём");
+
+            int height = Theme.Small.Height + 8;
+            // строки: ПЕРСОНАЖИ, Папа, Даша, ЛОКАЦИИ, Детская, МИНИ-ИГРЫ, Морской бой, ИНТЕРФЕЙС, Экран поиска, ПРОЧЕЕ, Без раздела
+            Action<int> clickRow = row =>
+            {
+                var at = (IntPtr)(((row * height + height / 2) << 16) | 40);
+                SendMessage(list.Handle, WM_LBUTTONDOWN, (IntPtr)1, at);
+                SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, at);
+                Pump(40);
+            };
+            clickRow(4);
+            Check(s.Queue[0].Id == "bg_kids_room", "клик по «Детская» открывает её фон");
+            WaitImages(form);
+            Check(goes.Text == "Куда идёт: Фон: П1, Ф1", "строка обновилась: " + goes.Text);
+            clickRow(0);
+            Check(s.Queue[0].Id == "bg_kids_room", "клик по заголовку ничего не делает");
+            Tiles(form)[0].Toggle();
+            clickRow(4);
+            Check(Tiles(form)[0].Marked, "клик по текущему разделу не сбрасывает отметки");
+            Key(form, Keys.Enter);
+            Check(s.Done.Count == 1 && s.Queue[0].Id == "dec_kids_drawer_closed", "после клика по панели Enter выбирает, а очередь идёт по разделу");
+            WaitImages(form);
+            Key(form, Keys.D2);
+            Check(Tiles(form)[1].Marked, "цифры работают после клика по панели");
+            clickRow(2);
+            Check(s.Queue[0].Id == "char_dasha_hub", "клик по «Даша»");
+            WaitImages(form);
+            form.Close();
+            Pump(20);
+
+            // Все разделы игры не помещаются в окно: по одному заданию из каждого.
+            root = Fresh("allsections");
+            SectionFile file;
+            using (Stream stream = typeof(SectionMap).Assembly.GetManifestResourceStream("sections.json"))
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+                file = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Deserialize<SectionFile>(reader.ReadToEnd());
+            foreach (SectionEntry entry in file.sections) MakeJob(root, "50_x", entry.jobs[0].id, true, 32, 32);
+            s = new Session(root);
+            Check(s.Stats().Count == file.sections.Count, "разделов в окне столько же, сколько в файле: " + s.Stats().Count);
+            form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 500);
+            form.Show();
+            Pump(100);
+            list = Find<SectionList>(form).Single();
+            FieldInfo scrollField = typeof(SectionList).GetField("scroll", BindingFlags.NonPublic | BindingFlags.Instance);
+            Func<int> scroll = () => (int)scrollField.GetValue(list);
+            int rows = s.Stats().Count + s.Stats().Select(x => x.Section.Kind).Distinct().Count();
+            int most = rows * height - list.Height;
+            Check(most > 0 && scroll() == 0, "список длиннее окна, сначала виден верх");
+            list.Wheel(-120);
+            Check(scroll() == height * 3, "колесо вниз сдвигает на три строки: " + scroll());
+            list.Wheel(-1200000);
+            Check(scroll() == most, "вниз не дальше конца: " + scroll() + " из " + most);
+            list.Wheel(1200000);
+            Check(scroll() == 0, "вверх не дальше начала");
+
+            Section lastSection = s.Stats().Last().Section;
+            s.JumpTo(lastSection);
+            list.SetData(s.Stats(), s.Queue[0].Section);
+            Check(scroll() == most, "текущий последний раздел прокручен в видимую часть: " + scroll());
+            clickRow = row =>
+            {
+                var at = (IntPtr)(((row * height - scroll() + height / 2) << 16) | 40);
+                SendMessage(list.Handle, WM_LBUTTONDOWN, (IntPtr)1, at);
+                SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, at);
+                Pump(40);
+            };
+            clickRow(rows - 2);
+            Check(s.Queue[0].Section == s.Stats()[s.Stats().Count - 2].Section, "клик в прокрученном списке попадает в свою строку");
+            Section chosen = s.Queue[0].Section;
+            var bar = (IntPtr)((2 << 16) | (list.Width - 3));
+            SendMessage(list.Handle, WM_LBUTTONDOWN, (IntPtr)1, bar);
+            SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, bar);
+            Pump(20);
+            Check(s.Queue[0].Section == chosen && scroll() < height, "полоса справа прокручивает и не переключает раздел: " + scroll());
+            form.Close();
+            Pump(20);
         }
 
         static GitHubSync Offline()
@@ -1043,8 +1259,16 @@ namespace Otbor
         static void Dialogs(string outDir)
         {
             string root = Fresh("dialogs");
+            foreach (string job in MixedJobs)
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true, 400, 600);
+            }
             MakeJob(root, "40_props", "job_0", true, 400, 400);
-            var form = new MainForm(new Session(root), Offline());
+            var session = new Session(root);
+            session.Decide(session.Queue[0], new[] { session.Queue[0].Id + "__ref_1" });
+            session.Decide(session.Queue[0], new string[0], "лицо не то");
+            var form = new MainForm(session, Offline());
             form.WindowState = FormWindowState.Normal;
             form.Size = new Size(1280, 800);
             form.Show();
@@ -1097,6 +1321,9 @@ namespace Otbor
                 }
                 else
                 {
+                    Say("--- папки и разделы");
+                    TestRoots();
+                    TestSections();
                     Say("--- логика");
                     TestCore();
                     Say("--- статус");
@@ -1109,6 +1336,8 @@ namespace Otbor
                         TestFirstLoad();
                         TestButtons();
                     }
+                    Say("--- панель разделов");
+                    TestSectionUi();
                     Say("--- окно");
                     TestUi();
                     Say("--- окно и отправка");
