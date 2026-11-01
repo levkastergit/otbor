@@ -11,6 +11,7 @@ results/index.html shows everything; results/compare/*.png compares LoRA checkpo
                      [--char-step 1500] [--prop-step 2000] [--bg-step 1000] [--force]
   python generate.py --kit K --rebg [--tol 26]      # redo background removal only (no GPU)
   python generate.py --kit K --runtime R --regen    # only jobs marked for regeneration in Otbor.exe
+  python generate.py --kit K --runtime R --compare-char NAME   # the current character LoRA against a newly trained one
 
 ПРОПУСКИ.txt in the kit root lists image-name patterns that are never generated (see load_skips).
 Jobs marked ready in Otbor.exe are never generated again (see load_status).
@@ -341,6 +342,24 @@ def write_index(kit, data):
         f.write('\n'.join(parts))
 
 
+def contact_sheet(gen, ckpts, prompts, trigger, size, path):
+    tiles = []
+    for ck in ckpts:
+        gen.use_lora(ck)
+        label = os.path.basename(ck)[:-len('.safetensors')]
+        row = [gen.run(p.replace('[trigger]', trigger), size, 777) for p in prompts]
+        tiles.append((label, row))
+        print(f'сравнение {label}: готово')
+    w, h = size
+    sheet = Image.new('RGB', (w * len(prompts) + 220, h * len(tiles)), 'white')
+    d = ImageDraw.Draw(sheet)
+    for r, (label, row) in enumerate(tiles):
+        d.text((8, r * h + 8), label, fill=(0, 0, 0))
+        for c, im in enumerate(row):
+            sheet.paste(im.resize((w, h)), (220 + c * w, r * h))
+    sheet.save(path)
+
+
 def compare(kit, runtime, gen, data):
     out = os.path.join(kit, 'results', 'compare')
     os.makedirs(out, exist_ok=True)
@@ -350,23 +369,21 @@ def compare(kit, runtime, gen, data):
         if not ckpts:
             print(f'!!! {name}: нет обученных файлов, сравнение пропущено')
             continue
-        prompts = data['compare_prompts'][key]
         size = {'char': (512, 768), 'bg': (704, 512)}.get(key, (512, 512))
-        tiles = []
-        for ck in ckpts:
-            gen.use_lora(ck)
-            label = os.path.basename(ck)[:-len('.safetensors')]
-            row = [gen.run(p.replace('[trigger]', data['triggers'][key]), size, 777) for p in prompts]
-            tiles.append((label, row))
-            print(f'сравнение {label}: готово')
-        w, h = size
-        sheet = Image.new('RGB', (w * len(prompts) + 220, h * len(tiles)), 'white')
-        d = ImageDraw.Draw(sheet)
-        for r, (label, row) in enumerate(tiles):
-            d.text((8, r * h + 8), label, fill=(0, 0, 0))
-            for c, im in enumerate(row):
-                sheet.paste(im.resize((w, h)), (220 + c * w, r * h))
-        sheet.save(os.path.join(out, f'{name}.png'))
+        contact_sheet(gen, ckpts, data['compare_prompts'][key], data['triggers'][key], size, os.path.join(out, f'{name}.png'))
+    gen.use_lora(None)
+
+
+def compare_new(kit, runtime, gen, data, name):
+    """Прежняя модель персонажей первой строкой, ниже последние чекпойнты новой: те же промпты и тот же seed."""
+    out = os.path.join(kit, 'results', 'compare')
+    os.makedirs(out, exist_ok=True)
+    old = lora_files(runtime, data['loras']['char'])[1]
+    steps, final = lora_files(runtime, name)
+    if not final:
+        sys.exit(f'Нет обученной модели {name}.')
+    ckpts = ([old] if old else []) + steps[-3:] + [final]
+    contact_sheet(gen, ckpts, data['compare_prompts']['char'], data['triggers']['char'], (512, 768), os.path.join(out, f'{name}.png'))
     gen.use_lora(None)
 
 
@@ -380,6 +397,8 @@ def main():
     ap.add_argument('--prop-step', default='')
     ap.add_argument('--bg-step', default='')
     ap.add_argument('--compare', action='store_true', help='только сравнение чекпойнтов')
+    ap.add_argument('--compare-char', default='', help='только сравнение модели персонажей с новой моделью')
+    ap.add_argument('--char-lora', default='', help='какой моделью делать персонажей вместо указанной в jobs.json')
     ap.add_argument('--force', action='store_true', help='перегенерировать существующие')
     ap.add_argument('--regen', action='store_true', help='только задания, отмеченные в Otbor.exe на перегенерацию')
     ap.add_argument('--rebg', action='store_true', help='только заново убрать фон')
@@ -387,6 +406,8 @@ def main():
     a = ap.parse_args()
 
     data = load_jobs(a.kit)
+    if a.char_lora:
+        data['loras']['char'] = a.char_lora
     results = os.path.join(a.kit, 'results')
     os.makedirs(results, exist_ok=True)
 
@@ -403,7 +424,7 @@ def main():
         return
 
     status, overrides, jobs = {}, {}, []
-    if not a.compare:
+    if not a.compare and not a.compare_char:
         status = load_status(results)
         only = [s.strip() for s in a.only.split(',') if s.strip()]
         jobs = [j for j in data['jobs'] if not only or any(j['id'].startswith(o) for o in only)]
@@ -422,6 +443,10 @@ def main():
     gen = Gen()
     if a.compare:
         compare(a.kit, a.runtime, gen, data)
+        write_index(a.kit, data)
+        return
+    if a.compare_char:
+        compare_new(a.kit, a.runtime, gen, data, a.compare_char)
         write_index(a.kit, data)
         return
 

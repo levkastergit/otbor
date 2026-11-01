@@ -1,0 +1,11 @@
+{
+ "night_mas": {"modes": ["ref"], "refs": ["datasets/char/028_Masha_1_PD2Masha_1.png", "datasets/char/029_Masha_1_PD2Masha_2.png", "results/_Нужные/80_chars2/masha_sleep_bed/masha_sleep_bed__ref_4.png"]},
+ "night_pug": {"modes": ["ref"], "refs": ["datasets/char/002_Pugovka_1_PD2Pugovka_2.png", "datasets/char/006_Pugovka_Base_PD1Images.png"]},
+ "night_das": {"modes": ["ref"], "refs": ["datasets/char/023_Dasha_Base.png", "datasets/char/024_Dasha_Muz1_PD2Dasha.png"]},
+ "night_zhe": {"modes": ["ref"], "refs": ["datasets/char/017_Zhenya_Base.png", "datasets/char/016_Zhenya_Anim_01.png"]},
+ "night_gs": {"modes": ["ref"], "refs": ["datasets/char/035_GalinaSergeevna_GalyaBook01.png", "datasets/char/040_Dasha_GalinaS.png"]},
+ "papa_sneak": {"modes": ["ref"], "refs": ["datasets/char/012_Papa_Full.png", "datasets/char/008_Papa_Base_PD1Images.png"]},
+ "papa_sort_pages": {"modes": ["ref"], "refs": ["datasets/char/012_Papa_Full.png", "datasets/char/008_Papa_Base_PD1Images.png"]},
+ "papa_read_book": {"modes": ["ref"], "refs": ["datasets/char/012_Papa_Full.png", "datasets/char/008_Papa_Base_PD1Images.png"]},
+ "masha_woken_bed": {"modes": ["ref"], "refs": ["results/_Нужные/80_chars2/masha_sleep_bed/masha_sleep_bed__ref_4.png", "datasets/char/028_Masha_1_PD2Masha_1.png"], "action": "sitting up in exactly the same bed as in the first reference image, same bed frame, bedding, colours and camera angle, just woken up, annoyed, squinting, full body"}
+}

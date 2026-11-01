@@ -156,6 +156,43 @@ remote['status/status.json'] = status
 out = run('--only', 'good', '--variants', '1', '--force')
 check(base_good in {s for p, s in out}, '--force делает готовое заново')
 
+# Правка задания: только текст раньше, теперь с образцами из отобранного. Номера ref начинаются с 1, путь берётся от кита
+picked = os.path.join(results, '_Нужные', '30_a', 'other', 'other__ref_1.png')
+os.makedirs(os.path.dirname(picked), exist_ok=True)
+Image.new('RGB', (8, 8)).save(picked)
+ref_job = job('text_only', modes=['t2i'], refs=[])
+fixed = {**ref_job, 'modes': ['ref'], 'refs': ['results/_Нужные/30_a/other/other__ref_1.png', 'refs/r.png']}
+check(len(g.load_refs(kit, fixed)) == 2, 'образец из отобранного читается')
+check(g.variants_made(results, fixed, 'ref', {'tried': ['text_only__t2i_1', 'text_only__t2i_4']}) == 0, 'ref после t2i начинается с первого номера')
+
+# Лист сравнения прежней и новой модели
+runtime = os.path.join(root, 'runtime')
+for name, files in {'c': ['c.safetensors', 'c_000000250.safetensors'],
+                    'c2': [f'c2_{s:09d}.safetensors' for s in (250, 500, 750, 1000, 1250)] + ['c2.safetensors']}.items():
+    os.makedirs(os.path.join(runtime, 'output', name))
+    for file in files:
+        open(os.path.join(runtime, 'output', name, file), 'wb').close()
+used = []
+
+
+class SheetGen(FakeGen):
+    def use_lora(self, path):
+        if path:
+            used.append(os.path.basename(path))
+
+
+sheet_data = {'loras': {'char': 'c'}, 'triggers': {'char': 'PD'}, 'compare_prompts': {'char': ['[trigger], a', '[trigger], b']}}
+g.compare_new(kit, runtime, SheetGen(), sheet_data, 'c2')
+check(used == ['c.safetensors', 'c2_000000750.safetensors', 'c2_000001000.safetensors', 'c2_000001250.safetensors', 'c2.safetensors'],
+      'лист: прежняя модель первой, затем последние чекпойнты новой: ' + str(used))
+check(os.path.isfile(os.path.join(results, 'compare', 'c2.png')), 'лист сохранён')
+stopped = False
+try:
+    g.compare_new(kit, runtime, SheetGen(), sheet_data, 'нет_такой')
+except SystemExit:
+    stopped = True
+check(stopped, 'без новой модели лист не строится')
+
 # Настоящий запрос к GitHub
 g2 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(g2)

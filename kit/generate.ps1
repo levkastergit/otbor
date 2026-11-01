@@ -25,10 +25,13 @@ if ($BgStep)   { $args2 += @("--bg-step", [string]$BgStep) }
 if ($Only)     { $args2 += @("--only", $Only) }
 if ($Force)    { $args2 += "--force" }
 if ($Regen)    { $args2 += "--regen" }
+# Модель выбирается в Otbor.exe, в «Пульте»: файл char_lora.txt появляется, когда включена дообученная.
+$loraFile = Join-Path $Kit "char_lora.txt"
+if (Test-Path $loraFile) { $args2 += @("--char-lora", (Get-Content $loraFile -TotalCount 1).Trim()) }
 $code = Invoke-Logged "generate.log" "" $Py $args2
 if ($code -ne 0) { Fail "Генерация завершилась с ошибкой." }
 
 $index = Join-Path $Kit "results\index.html"
 Say "Готово: $index"
-if (Test-Path $index) { Start-Process $index }
+if ((Test-Path $index) -and -not $env:OTBOR) { Start-Process $index }
 exit 0

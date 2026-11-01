@@ -605,6 +605,404 @@ namespace Otbor
         }
     }
 
+    // Пульт: всё, что раньше запускалось отдельными bat-файлами. Окно не модальное: пока идёт генерация, можно разбирать.
+    class ControlForm : Form
+    {
+        const string NewModel = "pd_char_v2";
+        const int LogLimit = 300000;
+
+        public static Func<string, bool> Ask = text =>
+            MessageBox.Show(text, "Отбор вариантов", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        public event Action<string> StateChanged;
+        public event Action TaskDone;
+
+        readonly string kit;
+        readonly Session session;
+        readonly KitTask task;
+        readonly Action restart;
+        readonly FlowLayoutPanel column = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Left,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true,
+            BackColor = Theme.Panel,
+            Padding = new Padding(10)
+        };
+        readonly TextBox log = new TextBox
+        {
+            Dock = DockStyle.Fill,
+            Multiline = true,
+            ReadOnly = true,
+            ScrollBars = ScrollBars.Vertical,
+            BackColor = Theme.Back,
+            ForeColor = Theme.Text,
+            BorderStyle = BorderStyle.None,
+            Font = new Font("Consolas", 10f)
+        };
+        readonly Label lblStatus = new Label
+        {
+            Dock = DockStyle.Top,
+            AutoEllipsis = true,
+            Font = Theme.Bold,
+            ForeColor = Theme.Text,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(10, 0, 10, 0)
+        };
+        readonly Label lblLive = new Label
+        {
+            Dock = DockStyle.Top,
+            AutoEllipsis = true,
+            Font = Theme.Small,
+            ForeColor = Theme.Dim,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(10, 0, 10, 0)
+        };
+        readonly ProgressStrip bar = new ProgressStrip { Dock = DockStyle.Top, Height = 6 };
+        readonly Label lblVersion = new Label { Font = Theme.Small, ForeColor = Theme.Dim, AutoSize = true };
+        readonly Label lblRegen = new Label { Font = Theme.Small, ForeColor = Theme.Dim, AutoSize = true };
+        readonly FlatButton btnUpdate = new FlatButton("Обновить программу", Theme.Panel);
+        readonly FlatButton btnStop = new FlatButton("Остановить", Theme.Panel);
+        readonly FlatButton btnSheet = new FlatButton("Открыть сравнение моделей", Theme.Panel);
+        readonly CheckBox chkNew = new CheckBox
+        {
+            Text = "Генерировать дообученной моделью",
+            AutoSize = true,
+            ForeColor = Theme.Text,
+            Font = Theme.Small,
+            Margin = new Padding(0, 4, 0, 4)
+        };
+        readonly List<FlatButton> actions = new List<FlatButton>();
+
+        string title = "";
+        string tag;
+        bool updating;
+        int firstDone = -1;
+        DateTime firstAt;
+
+        string SheetPath
+        {
+            get { return Path.Combine(session.Root, "compare", NewModel + ".png"); }
+        }
+
+        string ModelFile
+        {
+            get { return Path.Combine(kit, "char_lora.txt"); }
+        }
+
+        bool HasKit
+        {
+            get { return File.Exists(Path.Combine(kit, "scripts", "generate.ps1")); }
+        }
+
+        public ControlForm(Session session, KitTask task, Action restart)
+        {
+            this.session = session;
+            this.task = task;
+            this.restart = restart;
+            kit = Path.GetDirectoryName(session.Root.TrimEnd('\\'));
+            Text = "Пульт FluxKit — " + kit;
+            BackColor = Theme.Back;
+            ForeColor = Theme.Text;
+            Font = Theme.Normal;
+            Size = new Size(1180, 830);
+            MinimumSize = new Size(900, 520);
+            StartPosition = FormStartPosition.CenterScreen;
+
+            int width = Theme.Normal.Height * 20;
+            column.Width = width + 40;
+            lblStatus.Height = Theme.Bold.Height + 12;
+            lblLive.Height = Theme.Small.Height + 8;
+
+            AddGroup("Обновление");
+            lblVersion.Text = "Версия " + KitUpdate.Current + ", проверяю GitHub…";
+            lblVersion.MaximumSize = new Size(width, 0);
+            column.Controls.Add(lblVersion);
+            AddButton(btnUpdate, width);
+
+            AddGroup("Генерация");
+            AddAction("Перегенерировать отмеченные", null, width, () => Run("Перегенерация", "generate.ps1", "-Regen"));
+            lblRegen.MaximumSize = new Size(width, 0);
+            lblRegen.Margin = new Padding(0, 0, 0, 8);
+            column.Controls.Add(lblRegen);
+            AddAction("Сгенерировать несделанное", "Готовые и разобранные задания пропускаются.", width,
+                () => Run("Генерация", "generate.ps1", "-SkipCompare"));
+            AddAction("Пробы стиля", "Четыре проверочных задания.", width,
+                () => Run("Пробы", "generate.ps1", "-Only 'bg_p0_office,char_papa_stand,folder_blue_closed,ui_panel_bottom'"));
+
+            AddGroup("Обучение");
+            AddAction("Обучить модели", "Учит только те LoRA, которых ещё нет.", width, () => Run("Обучение", "train.ps1", ""));
+            AddAction("Дообучить персонажей", "Исходные образцы плюс отобранные картинки. Прежняя модель остаётся.", width, Retrain);
+            AddButton(btnSheet, width);
+            column.Controls.Add(chkNew);
+
+            AddGroup("Установка");
+            AddAction("Установить окружение", "Готовые шаги пропускаются.", width, () => Run("Установка", "install.ps1", ""));
+
+            var stopRow = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, BackColor = Theme.Panel, Padding = new Padding(6) };
+            stopRow.Controls.Add(btnStop);
+            Controls.Add(log);
+            Controls.Add(lblLive);
+            Controls.Add(lblStatus);
+            Controls.Add(bar);
+            Controls.Add(stopRow);
+            Controls.Add(column);
+
+            btnStop.Click += (a, b) => StopTask();
+            btnUpdate.Click += (a, b) => StartUpdate();
+            btnSheet.Click += (a, b) => OpenSheet();
+            chkNew.CheckedChanged += (a, b) => SaveModelChoice();
+            task.Line += text => OnUi(() => AddLine(text));
+            task.Live += text => OnUi(() => ShowLive(text));
+            task.Finished += code => OnUi(() => OnFinished(code));
+            lblStatus.Text = HasKit ? "Задач нет" : "Рядом с папкой results нет FluxKit: скрипты не найдены.";
+            chkNew.Checked = File.Exists(ModelFile);
+            ShowState();
+            CheckVersion();
+        }
+
+        void AddGroup(string text)
+        {
+            column.Controls.Add(new Label
+            {
+                Text = text.ToUpperInvariant(),
+                AutoSize = true,
+                Font = Theme.Small,
+                ForeColor = Theme.Warn,
+                Margin = new Padding(0, 10, 0, 4)
+            });
+        }
+
+        void AddButton(FlatButton button, int width)
+        {
+            button.AutoSize = false;
+            button.Size = new Size(width, Theme.Normal.Height + 16);
+            button.Margin = new Padding(0, 2, 0, 2);
+            column.Controls.Add(button);
+        }
+
+        void AddAction(string text, string note, int width, Action click)
+        {
+            var button = new FlatButton(text, Theme.Panel);
+            AddButton(button, width);
+            button.Click += (a, b) => click();
+            actions.Add(button);
+            if (note == null) return;
+            column.Controls.Add(new Label
+            {
+                Text = note,
+                AutoSize = true,
+                MaximumSize = new Size(width, 0),
+                Font = Theme.Small,
+                ForeColor = Theme.Dim,
+                Margin = new Padding(0, 0, 0, 8)
+            });
+        }
+
+        // Вывод задачи приходит из её потоков, а после закрытия окна его показывать уже некуда.
+        void OnUi(Action action)
+        {
+            try
+            {
+                if (IsHandleCreated && !IsDisposed) BeginInvoke(action);
+            }
+            catch (InvalidOperationException) { }
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            ShowState();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (e.CloseReason != CloseReason.UserClosing || forceClose) return;
+            e.Cancel = true;
+            Hide();
+        }
+
+        bool forceClose;
+
+        public void ForceClose()
+        {
+            forceClose = true;
+            Close();
+        }
+
+        public void ShowState()
+        {
+            bool free = !task.Running && !updating;
+            foreach (FlatButton button in actions) button.Enabled = HasKit && free;
+            btnStop.Enabled = task.Running;
+            btnUpdate.Enabled = free && tag != null;
+            btnSheet.Enabled = File.Exists(SheetPath);
+            chkNew.Enabled = File.Exists(SheetPath);
+            lblRegen.Text = "На перегенерацию отмечено: " + session.RegenCount;
+            Action<string> handler = StateChanged;
+            if (handler != null) handler(task.Running ? "Пульт: " + title + "  [G]" : "Пульт  [G]");
+        }
+
+        void Run(string name, string script, string arguments)
+        {
+            if (task.Running) return;
+            title = name;
+            firstDone = -1;
+            bar.Value = 0;
+            bar.Invalidate();
+            lblLive.Text = "";
+            lblStatus.Text = name + ": идёт";
+            AddLine("");
+            AddLine("=== " + name + ", " + DateTime.Now.ToString("HH:mm:ss"));
+            try
+            {
+                task.Start(KitTask.PowerShell(kit, script, arguments));
+            }
+            catch (Exception e)
+            {
+                lblStatus.Text = name + ": не запустилось. " + e.Message;
+            }
+            ShowState();
+        }
+
+        void Retrain()
+        {
+            if (!File.Exists(Path.Combine(kit, "scripts", "retrain.py")))
+            {
+                lblStatus.Text = "Сначала нажмите «Обновить программу»: нет scripts\\retrain.py.";
+                return;
+            }
+            string warning = File.Exists(SheetPath) ? "\n\nПрошлая дообученная модель будет заменена." : "";
+            if (Ask("Новая модель учится заново на исходных образцах и отобранных картинках. На ПК 3 это около 65 минут, " +
+                    "видеокарта всё это время занята. Прежняя модель остаётся, в конце будет лист сравнения." + warning + "\n\nЗапустить?"))
+                Run("Дообучение", "train.ps1", "-Retrain");
+        }
+
+        void StopTask()
+        {
+            if (task.Running && Ask("Остановить «" + title + "»? Обучение потеряет шаги после последнего чекпойнта.")) task.Stop();
+        }
+
+        void AddLine(string text)
+        {
+            if (log.TextLength > LogLimit) log.Text = log.Text.Substring(LogLimit / 2);
+            log.AppendText(text + "\r\n");
+            lblLive.Text = "";
+            ShowStep(text);
+        }
+
+        void ShowLive(string text)
+        {
+            lblLive.Text = text;
+            ShowStep(text);
+        }
+
+        void ShowStep(string text)
+        {
+            int done, total;
+            if (!KitTask.TryProgress(text, out done, out total)) return;
+            bar.Value = Math.Min(1f, done / (float)total);
+            bar.Invalidate();
+            if (firstDone < 0 || done < firstDone)
+            {
+                firstDone = done;
+                firstAt = DateTime.UtcNow;
+            }
+            string left = "";
+            if (done > firstDone)
+            {
+                double perStep = (DateTime.UtcNow - firstAt).TotalSeconds / (done - firstDone);
+                left = ", осталось около " + Math.Ceiling(perStep * (total - done) / 60) + " мин";
+            }
+            lblStatus.Text = title + ": " + done + " из " + total + left;
+        }
+
+        void OnFinished(int code)
+        {
+            if (task.WasStopped) lblStatus.Text = title + ": остановлено";
+            else if (code == 0) lblStatus.Text = title + ": готово";
+            else lblStatus.Text = title + ": ошибка, код " + code + ". Подробности в журнале и в results\\logs";
+            if (code == 0 && !task.WasStopped)
+            {
+                bar.Value = 1;
+                bar.Invalidate();
+            }
+            lblLive.Text = "";
+            AddLine("=== " + lblStatus.Text);
+            Action handler = TaskDone;
+            if (handler != null) handler();
+            ShowState();
+        }
+
+        void CheckVersion()
+        {
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                string found = null;
+                string problem = null;
+                try
+                {
+                    found = KitUpdate.LatestTag();
+                }
+                catch (Exception e)
+                {
+                    problem = e.Message;
+                }
+                OnUi(() =>
+                {
+                    tag = found;
+                    if (found == null) lblVersion.Text = "Версия " + KitUpdate.Current + ". GitHub не ответил: " + problem;
+                    else if (KitUpdate.IsNewer(found)) lblVersion.Text = "Версия " + KitUpdate.Current + ", есть новая: " + found;
+                    else lblVersion.Text = "Версия " + KitUpdate.Current + ", это последняя. Кнопка поставит её заново.";
+                    ShowState();
+                });
+            });
+        }
+
+        void StartUpdate()
+        {
+            if (tag == null || task.Running) return;
+            updating = true;
+            ShowState();
+            string version = tag;
+            string exe = Application.ExecutablePath;
+            title = "Обновление";
+            AddLine("");
+            AddLine("=== Обновление до " + version);
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                try
+                {
+                    KitUpdate.Install(version, kit, exe, text => OnUi(() => AddLine(text)));
+                    OnUi(restart);
+                }
+                catch (Exception e)
+                {
+                    OnUi(() =>
+                    {
+                        updating = false;
+                        lblStatus.Text = "Обновление не прошло: " + e.Message;
+                        AddLine(lblStatus.Text);
+                        ShowState();
+                    });
+                }
+            });
+        }
+
+        void OpenSheet()
+        {
+            if (File.Exists(SheetPath)) Process.Start(SheetPath);
+        }
+
+        void SaveModelChoice()
+        {
+            if (chkNew.Checked) File.WriteAllText(ModelFile, NewModel);
+            else if (File.Exists(ModelFile)) File.Delete(ModelFile);
+        }
+    }
+
     class MainForm : Form
     {
         const string DefaultHint = "Клик или цифра — отметить  •  двойной клик — выбрать и дальше  •  правый клик — посмотреть крупно";
@@ -651,6 +1049,7 @@ namespace Otbor
         readonly FlatButton btnView = new FlatButton("", Theme.Panel);
         readonly FlatButton btnOpen = new FlatButton("Открыть папку с нужными", Theme.Panel);
         readonly FlatButton btnGit = new FlatButton("", Theme.Panel);
+        readonly FlatButton btnPanel = new FlatButton("Пульт  [G]", Theme.Panel);
         readonly FlatButton btnNext = new FlatButton("Далее →  [Enter]", Theme.Accent);
         readonly FlatButton btnReview = new FlatButton("Выбранное  [V]", Theme.Panel);
         readonly FlatButton btnPrevPage = new FlatButton("← Страница", Theme.Panel);
@@ -666,6 +1065,8 @@ namespace Otbor
         int loadToken;
         ReviewState review;
         Section returnTo;
+        readonly KitTask kitTask = new KitTask();
+        ControlForm panel;
 
         Job Current
         {
@@ -691,7 +1092,7 @@ namespace Otbor
             this.session = session;
             this.sync = sync;
             AskNote = ShowNoteDialog;
-            Text = "Отбор вариантов — " + session.Root;
+            Text = "Отбор вариантов " + KitUpdate.Current + " — " + session.Root;
             BackColor = Theme.Back;
             ForeColor = Theme.Text;
             Font = Theme.Normal;
@@ -731,7 +1132,7 @@ namespace Otbor
             };
             buttons.Controls.AddRange(new Control[]
             {
-                btnBack, btnSkip, btnNone, btnView, btnOpen, btnGit, btnReview, btnNext,
+                btnBack, btnSkip, btnNone, btnView, btnOpen, btnGit, btnPanel, btnReview, btnNext,
                 btnPrevPage, btnNextPage, btnRedo, btnClose, btnCompare
             });
             lblHint.Dock = DockStyle.Bottom;
@@ -751,6 +1152,7 @@ namespace Otbor
             btnOpen.Click += (a, b) => OpenNeeded();
             btnGit.Click += (a, b) => GitClicked();
             btnReview.Click += (a, b) => ShowPicked();
+            btnPanel.Click += (a, b) => ShowPanel();
             btnPrevPage.Click += (a, b) => TurnPage(-1);
             btnNextPage.Click += (a, b) => TurnPage(1);
             btnRedo.Click += (a, b) => Redo();
@@ -815,7 +1217,14 @@ namespace Otbor
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            if (e.Cancel || !sync.HasUnsent) return;
+            if (kitTask.Running)
+            {
+                if (ControlForm.Ask("Идёт задача из пульта. Остановить её и закрыть программу?")) kitTask.Stop();
+                else e.Cancel = true;
+            }
+            if (e.Cancel) return;
+            if (panel != null) panel.ForceClose();
+            if (!sync.HasUnsent) return;
             Text = "Отправляю разбор на GitHub…";
             Cursor = Cursors.WaitCursor;
             sync.Flush(10000);
@@ -861,8 +1270,37 @@ namespace Otbor
                 case Keys.S: Skip(); return true;
                 case Keys.A: ToggleView(); return true;
                 case Keys.V: ShowPicked(); return true;
+                case Keys.G: ShowPanel(); return true;
             }
             return false;
+        }
+
+        public void ShowPanel()
+        {
+            if (panel == null)
+            {
+                panel = new ControlForm(session, kitTask, Restart);
+                panel.StateChanged += text => btnPanel.Text = text;
+                panel.TaskDone += AfterKitTask;
+            }
+            panel.Show();
+            panel.Activate();
+            panel.ShowState();
+        }
+
+        void Restart()
+        {
+            Process.Start(Application.ExecutablePath);
+            Close();
+        }
+
+        // После генерации в очереди появляются новые варианты; обзор и отметки на текущем задании остаются.
+        void AfterKitTask()
+        {
+            List<string> marked = tiles.Where(t => t.Marked).Select(t => t.V.Name).ToList();
+            session.Rescan();
+            if (review != null) ShowProgress(null, review.Section);
+            else ShowCurrent(marked);
         }
 
         bool HandleReviewKey(Keys key, int number)
@@ -884,6 +1322,7 @@ namespace Otbor
                 case Keys.PageDown: TurnPage(1); return true;
                 case Keys.R: Redo(); return true;
                 case Keys.A: ToggleView(); return true;
+                case Keys.G: ShowPanel(); return true;
             }
             return false;
         }
@@ -1413,6 +1852,7 @@ namespace Otbor
         static void Main(string[] args)
         {
             SetProcessDPIAware();
+            KitUpdate.Cleanup(Application.ExecutablePath);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             string root = FindResults(args);

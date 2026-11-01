@@ -13,6 +13,8 @@ call :get Otbor.exe results\Otbor.exe || goto fail
 if exist Otbor.exe copy /y results\Otbor.exe Otbor.exe >nul || goto fail
 call :get kit/generate.py scripts\generate.py || goto fail
 call :get kit/generate.ps1 scripts\generate.ps1 || goto fail
+call :get kit/train.ps1 scripts\train.ps1 || goto fail
+call :get kit/retrain.py scripts\retrain.py || goto fail
 call :get kit/5_REGEN.bat 5_REGEN.bat || goto fail
 echo.
 echo DONE. Run results\Otbor.exe

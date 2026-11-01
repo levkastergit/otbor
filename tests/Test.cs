@@ -958,6 +958,320 @@ namespace Otbor
             Pump(20);
         }
 
+        const string DemoScript = @"
+param([string]$Mode = 'ok')
+Write-Host '=== Русский текст из PowerShell'
+[Console]::Out.WriteLine('[3/10] job_x  1.0 с')
+foreach ($part in ""шаг"", ""`r 40%| 400/1000 [00:10<00:15]"", ""`r 90%| 900/1000 [00:20<00:02]`n"") {
+    [Console]::Out.Write($part)
+    [Console]::Out.Flush()
+    Start-Sleep -Milliseconds 250
+}
+[Console]::Error.WriteLine('ошибка в stderr')
+if ($Mode -eq 'fail') { exit 7 }
+if ($Mode -eq 'hang') {
+    $p = Start-Process ping -ArgumentList '-n','60','127.0.0.1' -NoNewWindow -PassThru
+    Write-Host ""child=$($p.Id)""
+    $p.WaitForExit()
+}
+Write-Host ""OTBOR=$env:OTBOR""
+exit 0
+";
+
+        static string MakeKit(string name, string script)
+        {
+            string results = Fresh(name);
+            string kit = Path.GetDirectoryName(results);
+            Directory.CreateDirectory(Path.Combine(kit, "scripts"));
+            foreach (string file in new[] { "generate.ps1", "train.ps1", "install.ps1" })
+                File.WriteAllText(Path.Combine(kit, "scripts", file), script, new UTF8Encoding(true));
+            return results;
+        }
+
+        static void RunTask(KitTask task, ProcessStartInfo info, List<string> lines, List<string> live, Action during = null)
+        {
+            int code = -1;
+            bool over = false;
+            Action<string> line = t => { lock (lines) lines.Add(t); };
+            Action<string> partial = t => { lock (live) live.Add(t); };
+            Action<int> finished = c => { code = c; over = true; };
+            task.Line += line;
+            task.Live += partial;
+            task.Finished += finished;
+            task.Start(info);
+            if (during != null) during();
+            WaitFor(() => over, 30000);
+            task.Line -= line;
+            task.Live -= partial;
+            task.Finished -= finished;
+            lines.Add("код=" + code);
+        }
+
+        static void TestKitTask()
+        {
+            int done, total;
+            Check(KitTask.TryProgress("[12/4900] char_x  3.1 с", out done, out total) && done == 12 && total == 4900, "прогресс генерации");
+            Check(KitTask.TryProgress("pd_char_v2:  10%|█ | 300/3000 [06:24<57:40, 1.28s/it, lr: 1e-04]", out done, out total) && done == 300 && total == 3000, "прогресс обучения");
+            Check(!KitTask.TryProgress("Модель загружена за 12 с, видеопамять 15.9 ГБ", out done, out total), "обычная строка не прогресс");
+
+            string results = MakeKit("kittask", DemoScript);
+            string kit = Path.GetDirectoryName(results);
+            var task = new KitTask();
+            var lines = new List<string>();
+            var live = new List<string>();
+            RunTask(task, KitTask.PowerShell(kit, "generate.ps1", ""), lines, live);
+            Say("      вывод: " + string.Join(" | ", lines));
+            Check(lines.Contains("=== Русский текст из PowerShell"), "русский текст PowerShell не искажён");
+            Check(lines.Contains("[3/10] job_x  1.0 с"), "строка прогресса дошла");
+            Check(lines.Contains("ошибка в stderr"), "поток ошибок тоже показан");
+            Check(lines.Contains("OTBOR=1"), "скрипт знает, что запущен из программы");
+            Check(lines.Contains(" 90%| 900/1000 [00:20<00:02]") && !lines.Any(l => l.Contains("40%")), "в журнал попадает только итог строки с \\r");
+            Check(live.Any(l => l.Contains("40%")), "промежуточные значения идут в живую строку");
+            Check(lines.Last() == "код=0" && !task.Running, "код 0, задача закончена");
+
+            lines.Clear();
+            RunTask(task, KitTask.PowerShell(kit, "generate.ps1", "-Mode fail"), lines, live);
+            Check(lines.Last() == "код=7", "код ошибки скрипта дошёл: " + lines.Last());
+
+            lines.Clear();
+            bool twice = false;
+            RunTask(task, KitTask.PowerShell(kit, "generate.ps1", "-Mode hang"), lines, live, () =>
+            {
+                WaitFor(() => { lock (lines) return lines.Any(l => l.StartsWith("child=")); }, 15000);
+                try { task.Start(KitTask.PowerShell(kit, "generate.ps1", "")); }
+                catch (InvalidOperationException) { twice = true; }
+                task.Stop();
+            });
+            Check(twice, "вторая задача не запускается, пока идёт первая");
+            Check(task.WasStopped && !task.Running, "задача остановлена");
+            int child = int.Parse(lines.First(l => l.StartsWith("child=")).Substring(6));
+            bool alive;
+            try { Process.GetProcessById(child); alive = true; }
+            catch (ArgumentException) { alive = false; }
+            Check(!alive, "дочерний процесс тоже остановлен");
+        }
+
+        // Ответы релиза GitHub: JSON последней версии, список файлов и сами файлы.
+        class FakeRelease : IDisposable
+        {
+            readonly HttpListener listener = new HttpListener();
+            public readonly string Url;
+            public readonly Dictionary<string, byte[]> Files = new Dictionary<string, byte[]>();
+
+            public FakeRelease()
+            {
+                var probe = new TcpListener(IPAddress.Loopback, 0);
+                probe.Start();
+                int port = ((IPEndPoint)probe.LocalEndpoint).Port;
+                probe.Stop();
+                Url = "http://127.0.0.1:" + port + "/";
+                listener.Prefixes.Add(Url);
+                listener.Start();
+                new Thread(Serve) { IsBackground = true }.Start();
+            }
+
+            void Serve()
+            {
+                while (listener.IsListening)
+                {
+                    HttpListenerContext c;
+                    try { c = listener.GetContext(); }
+                    catch (HttpListenerException) { return; }
+                    catch (ObjectDisposedException) { return; }
+                    byte[] body;
+                    if (Files.TryGetValue(c.Request.Url.AbsolutePath, out body))
+                    {
+                        c.Response.ContentLength64 = body.Length;
+                        c.Response.OutputStream.Write(body, 0, body.Length);
+                    }
+                    else c.Response.StatusCode = 404;
+                    c.Response.Close();
+                }
+            }
+
+            public void Dispose() { listener.Close(); }
+        }
+
+        static void TestUpdate()
+        {
+            Check(KitUpdate.IsNewer("v99.0.0") && !KitUpdate.IsNewer("v0.1.0") && !KitUpdate.IsNewer("v" + KitUpdate.Current), "сравнение версий");
+            string results = Fresh("update");
+            string kit = Path.GetDirectoryName(results);
+            string scripts = Path.Combine(kit, "scripts");
+            Directory.CreateDirectory(scripts);
+            string gen = Path.Combine(scripts, "generate.py");
+            string running = Path.Combine(results, "Otbor.exe");
+            string rootCopy = Path.Combine(kit, "Otbor.exe");
+            File.WriteAllText(gen, "старый");
+            File.WriteAllText(running, "старый exe");
+            File.WriteAllText(rootCopy, "старый exe");
+            byte[] exe = Encoding.ASCII.GetBytes("MZ новая программа");
+            using (var server = new FakeRelease())
+            {
+                string apiUrl = KitUpdate.ApiUrl, assetUrl = KitUpdate.AssetUrl, rawUrl = KitUpdate.RawUrl;
+                KitUpdate.ApiUrl = server.Url + "latest";
+                KitUpdate.AssetUrl = server.Url + "asset/";
+                KitUpdate.RawUrl = server.Url + "raw/";
+                try
+                {
+                    server.Files["/latest"] = Encoding.UTF8.GetBytes("{\"tag_name\":\"v9.9.9\",\"name\":\"x\"}");
+                    server.Files["/raw/v9.9.9/kit/files.txt"] = Encoding.UTF8.GetBytes("kit/generate.py\tscripts\\generate.py\r\nkit/new.py\tscripts\\new.py\r\n");
+                    server.Files["/raw/v9.9.9/kit/generate.py"] = Encoding.UTF8.GetBytes("новый");
+                    Check(KitUpdate.LatestTag() == "v9.9.9", "последняя версия прочитана");
+
+                    var said = new List<string>();
+                    bool failed = false;
+                    try { KitUpdate.Install("v9.9.9", kit, running, said.Add); }
+                    catch (WebException) { failed = true; }
+                    Check(failed && File.ReadAllText(gen) == "старый" && !Directory.GetFiles(scripts, "*.new").Any(), "файла нет на сервере: всё осталось как было");
+
+                    server.Files["/raw/v9.9.9/kit/new.py"] = Encoding.UTF8.GetBytes("новый файл");
+                    server.Files["/asset/v9.9.9/Otbor.exe"] = Encoding.ASCII.GetBytes("не программа");
+                    failed = false;
+                    try { KitUpdate.Install("v9.9.9", kit, running, said.Add); }
+                    catch (InvalidDataException) { failed = true; }
+                    Check(failed && File.ReadAllText(gen) == "старый" && File.ReadAllText(running) == "старый exe", "повреждённый exe не ставится");
+
+                    server.Files["/asset/v9.9.9/Otbor.exe"] = exe;
+                    KitUpdate.Install("v9.9.9", kit, running, said.Add);
+                    Check(File.ReadAllText(gen) == "новый" && File.ReadAllText(Path.Combine(scripts, "new.py")) == "новый файл", "файлы кита обновлены, новый файл добавлен");
+                    Check(File.ReadAllBytes(running).SequenceEqual(exe) && File.ReadAllBytes(rootCopy).SequenceEqual(exe), "обновлены обе копии программы");
+                    Check(File.ReadAllText(running + ".old") == "старый exe", "работающая копия отложена рядом");
+                    Check(!Directory.GetFiles(kit, "*.new", SearchOption.AllDirectories).Any(), "временных файлов не осталось");
+                    KitUpdate.Cleanup(running);
+                    Check(!File.Exists(running + ".old"), "старая копия удаляется при запуске");
+                }
+                finally
+                {
+                    KitUpdate.ApiUrl = apiUrl;
+                    KitUpdate.AssetUrl = assetUrl;
+                    KitUpdate.RawUrl = rawUrl;
+                }
+            }
+        }
+
+        static void TestPanelUi()
+        {
+            // Генерация кладёт новое задание, очередь должна увидеть его после конца задачи.
+            string script = DemoScript.Replace("if ($Mode -eq 'hang')", @"
+$png = Join-Path $PSScriptRoot '..\source.png'
+$dir = Join-Path $PSScriptRoot '..\results\80_chars2\dasha_candle'
+if ($Mode -eq 'ok' -and (Test-Path $png)) { New-Item -ItemType Directory -Force $dir | Out-Null; Copy-Item $png (Join-Path $dir 'dasha_candle__ref_1.png') }
+if ($Mode -eq 'hang')");
+            string root = MakeKit("panel", script);
+            string kit = Path.GetDirectoryName(root);
+            Png(Path.Combine(kit, "source.png"), 64, 64, Color.Green);
+            MakeJob(root, "30_char_p0", "char_dasha_hub", true, 64, 64);
+            var s = new Session(root);
+            var form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Size = new Size(1280, 800);
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = Point.Empty;
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            Key(form, Keys.D2);
+            FlatButton btnPanel = Find<FlatButton>(form).First(b => b.Text.StartsWith("Пульт"));
+            Key(form, Keys.G);
+            Pump(100);
+            ControlForm panel = Application.OpenForms.OfType<ControlForm>().Single();
+            panel.StartPosition = FormStartPosition.Manual;
+            panel.Location = new Point(100, 50);
+            Pump(50);
+            Func<string, FlatButton> button = text => Find<FlatButton>(panel).First(b => b.Text.StartsWith(text));
+            FlatButton generate = button("Сгенерировать");
+            TextBox logBox = Find<TextBox>(panel).Single();
+            Check(panel.Visible && generate.Enabled, "G открывает пульт, кнопки доступны");
+            Check(button("Открыть сравнение").Enabled == false, "сравнения пока нет");
+
+            var sw = Stopwatch.StartNew();
+            RealClick(generate);
+            Check(!generate.Enabled || logBox.Text.Contains("готово"), "во время задачи кнопки выключены");
+            Check(btnPanel.Text.StartsWith("Пульт: ") || logBox.Text.Contains("готово"), "в главном окне видно, что идёт задача");
+            while (sw.ElapsedMilliseconds < 20000 && !logBox.Text.Contains("Генерация: готово")) Pump(20);
+            Say("      журнал: " + logBox.Text.Replace("\r\n", " | "));
+            Check(logBox.Text.Contains("Русский текст") && logBox.Text.Contains("Генерация: готово"), "вывод задачи и итог в журнале");
+            Pump(60);
+            Check(generate.Enabled && btnPanel.Text == "Пульт  [G]", "после конца кнопки снова доступны");
+            Check(s.Queue.Any(j => j.Id == "dasha_candle"), "новое задание появилось в очереди без перезапуска");
+            Check(s.Queue[0].Id == "char_dasha_hub" && Tiles(form)[1].Marked, "текущее задание и отметки на месте");
+            Check(Find<Label>(panel).Any(l => l.Text.StartsWith("На перегенерацию отмечено: 0")), "счётчик перегенерации виден");
+
+            // Ошибка скрипта
+            string errors = Path.Combine(kit, "scripts", "generate.ps1");
+            File.WriteAllText(errors, "exit 3", new UTF8Encoding(true));
+            RealClick(button("Перегенерировать"));
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 15000 && !logBox.Text.Contains("ошибка, код 3")) Pump(20);
+            Check(logBox.Text.Contains("Перегенерация: ошибка, код 3"), "ошибка задачи показана");
+
+            // Дообучение и закрытие при идущей задаче
+            string asked = null;
+            bool answer = false;
+            Func<string, bool> realAsk = ControlForm.Ask;
+            ControlForm.Ask = text => { asked = text; return answer; };
+            File.WriteAllText(Path.Combine(kit, "scripts", "train.ps1"), DemoScript.Replace("$Mode = 'ok'", "$Mode = 'hang'").Replace("param([string]$Mode = 'hang')", "param([string]$Mode = 'hang', [switch]$Retrain)"), new UTF8Encoding(true));
+            RealClick(button("Дообучить"));
+            Check(asked == null && Find<Label>(panel).Any(l => l.Text.Contains("Обновить программу")), "без retrain.py дообучение просит обновиться");
+            File.WriteAllText(Path.Combine(kit, "scripts", "retrain.py"), "");
+            RealClick(button("Дообучить"));
+            Check(asked != null && asked.Contains("65 минут") && !task(panel), "перед дообучением программа спрашивает");
+            answer = true;
+            RealClick(button("Дообучить"));
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 15000 && !logBox.Text.Contains("child=")) Pump(20);
+            Check(logBox.Text.Contains("child="), "дообучение запущено");
+            answer = false;
+            form.Close();
+            Pump(40);
+            Check(form.Visible && asked.Contains("Остановить её"), "при идущей задаче окно спрашивает и остаётся");
+            answer = true;
+            RealClick(button("Остановить"));
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 15000 && !logBox.Text.Contains("Дообучение: остановлено")) Pump(20);
+            Check(logBox.Text.Contains("Дообучение: остановлено"), "кнопка останавливает задачу");
+
+            // Лист сравнения и выбор модели
+            ControlForm.Ask = text => true;
+            Png(Path.Combine(root, "compare", "pd_char_v2.png"), 16, 16, Color.Red);
+            panel.ShowState();
+            CheckBox model = Find<CheckBox>(panel).Single();
+            Check(model.Enabled && button("Открыть сравнение").Enabled, "после дообучения доступны сравнение и выбор модели");
+            model.Checked = true;
+            Check(File.ReadAllText(Path.Combine(kit, "char_lora.txt")) == "pd_char_v2", "выбор модели сохранён");
+            model.Checked = false;
+            Check(!File.Exists(Path.Combine(kit, "char_lora.txt")), "выбор модели снимается");
+
+            panel.Close();
+            Pump(30);
+            Check(!panel.Visible && !panel.IsDisposed, "закрытие пульта только прячет его");
+            Key(form, Keys.G);
+            Pump(40);
+            Check(panel.Visible, "пульт открывается снова");
+            form.Close();
+            Pump(40);
+            Check(panel.IsDisposed, "пульт закрывается вместе с программой");
+            ControlForm.Ask = realAsk;
+
+            // Без кита кнопки выключены
+            root = Fresh("nokit");
+            MakeJob(root, "30_char_p0", "char_dasha_hub", true, 64, 64);
+            form = new MainForm(new Session(root), Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.Show();
+            Pump(60);
+            Key(form, Keys.G);
+            Pump(60);
+            panel = Application.OpenForms.OfType<ControlForm>().Single();
+            Check(!Find<FlatButton>(panel).First(b => b.Text.StartsWith("Сгенерировать")).Enabled, "без FluxKit запуск недоступен");
+            Check(Find<Label>(panel).Any(l => l.Text.Contains("скрипты не найдены")), "причина написана");
+            form.Close();
+            Pump(40);
+        }
+
+        static bool task(ControlForm panel) { return Find<Label>(panel).Any(l => l.Text.EndsWith(": идёт")); }
+
         static GitHubSync Offline()
         {
             var sync = new GitHubSync(null, "test0000");
@@ -1545,6 +1859,42 @@ namespace Otbor
             }
         }
 
+        // Нажимает кнопки пульта на папке с настоящими скриптами кита.
+        static void Sandbox(string root, string outDir)
+        {
+            ControlForm.Ask = text => true;
+            var s = new Session(root);
+            var form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = Point.Empty;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(200);
+            int before = s.Queue.Count;
+            form.ShowPanel();
+            Pump(200);
+            ControlForm panel = Application.OpenForms.OfType<ControlForm>().Single();
+            TextBox logBox = Find<TextBox>(panel).Single();
+            Action<string, string> press = (button, title) =>
+            {
+                RealClick(Find<FlatButton>(panel).First(b => b.Text.StartsWith(button)));
+                var sw = Stopwatch.StartNew();
+                while (sw.ElapsedMilliseconds < 100000 && !logBox.Text.Contains("=== " + title + ": ")) Pump(50);
+                Pump(200);
+            };
+            press("Дообучить", "Дообучение");
+            Save(panel, Path.Combine(outDir, "panel_retrain.png"));
+            panel.ShowState();
+            Find<CheckBox>(panel).Single().Checked = true;
+            press("Перегенерировать", "Перегенерация");
+            File.WriteAllText(Path.Combine(outDir, "sandbox_log.txt"), logBox.Text, new UTF8Encoding(false));
+            Say("очередь: было " + before + ", стало " + s.Queue.Count + ": " + string.Join(",", s.Queue.Select(j => j.Id + "=" + j.Variants.Count)));
+            ControlForm.Ask = text => true;
+            form.Close();
+            Pump(50);
+        }
+
         // Снимки обзора на настоящей папке: по решению на каждое задание, затем сравнение двух отмеченных.
         static void ReviewShots(string root, string outDir)
         {
@@ -1588,6 +1938,9 @@ namespace Otbor
             WaitImages(form);
             Pump(150);
             Save(form, Path.Combine(outDir, "dlg_main.png"));
+            form.ShowPanel();
+            Pump(400);
+            Save(Application.OpenForms.OfType<ControlForm>().Single(), Path.Combine(outDir, "dlg_panel.png"));
             form.Close();
             using (var note = new NoteDialog("Папа стоит, базовая поза"))
             {
@@ -1625,6 +1978,7 @@ namespace Otbor
             if (args.Length > 2 && args[0] == "shots") { Shots(args[1], args[2]); return 0; }
             if (args.Length > 1 && args[0] == "dialogs") { Dialogs(args[1]); return 0; }
             if (args.Length > 2 && args[0] == "review") { ReviewShots(args[1], args[2]); return 0; }
+            if (args.Length > 2 && args[0] == "sandbox") { Sandbox(args[1], args[2]); return 0; }
             try
             {
                 if (args.Length > 0 && args[0] == "live")
@@ -1639,6 +1993,9 @@ namespace Otbor
                     TestSections();
                     Say("--- обзор выбранного");
                     TestReview();
+                    Say("--- задачи и обновление");
+                    TestKitTask();
+                    TestUpdate();
                     Say("--- логика");
                     TestCore();
                     Say("--- статус");
@@ -1655,6 +2012,8 @@ namespace Otbor
                     TestSectionUi();
                     Say("--- обзор в окне");
                     TestReviewUi();
+                    Say("--- пульт");
+                    TestPanelUi();
                     Say("--- окно");
                     TestUi();
                     Say("--- окно и отправка");

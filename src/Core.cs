@@ -548,10 +548,25 @@ namespace Otbor
             Queue.Sort(CompareJobs);
             int first = Queue.FindIndex(j => j.Section == section);
             if (first < 0) return false;
+            Rotate(first);
+            return true;
+        }
+
+        void Rotate(int first)
+        {
             List<Job> before = Queue.GetRange(0, first);
             Queue.RemoveRange(0, first);
             Queue.AddRange(before);
-            return true;
+        }
+
+        // После генерации в папках появляются новые варианты. Текущее задание остаётся первым.
+        public void Rescan()
+        {
+            Job current = Queue.FirstOrDefault();
+            Queue.Clear();
+            Scan();
+            int first = current == null ? -1 : Queue.FindIndex(j => j.Group == current.Group && j.Id == current.Id);
+            if (first > 0) Rotate(first);
         }
 
         // Решения раздела в порядке очереди. Файлы берутся из журнала: имя могло получить суффикс при совпадении.
