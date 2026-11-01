@@ -4,6 +4,9 @@
 
 Комнаты и уровни: GameDesign.md §4.2 и §12.1. Предмет попадает в локацию своей первой сцены из SearchLists.csv,
 повторы в других сценах показаны в строке «Куда идёт». Если задание не нашло раздел, скрипт останавливается.
+
+Второй вид, levels: те же задания по уровням в порядке прохождения (§12.1, §12.2). Задание стоит на уровне, где оно
+появляется первым. Кто на каком уровне: строки «Персонажи и реплики» карточек §12.3–§12.19.
 """
 import csv
 import json
@@ -133,6 +136,64 @@ MECHANICS = {
 INTERFACE = {'10_ui_search': 'Экран поиска', '11_ui_windows': 'Окна', '12_ui_menu': 'Меню', '13_ui_cursors': 'Курсоры'}
 
 
+# Порядок прохождения: уровень -> строки панели. Ключ строки — номер сцены из SearchLists.csv или своё имя.
+LEVEL_PLAN = [
+    ('P0', [('chars', 'Персонажи'), ('1', 'Сцена 1: приёмная клиники'), ('2', 'Сцена 2: кабинет Папы'), ('mg', 'Мини-игра «Ежедневник»'),
+            ('card', '20:10: комната Папы'), ('hub', 'Семейный совет')]),
+    ('HUB', [('chars', 'Дочери засыпают')]),
+    ('P1', [('chars', 'Персонажи'), ('1', 'Сцена 1: детская'), ('2', 'Сцена 2: кухня'), ('3', 'Сцена 3: гостиная'), ('4', 'Сцена 4: прихожая')]),
+    ('P2', [('chars', 'Персонажи'), ('1', 'Сцена: детский сад'), ('mg', 'Мини-игра «Паровозик»')]),
+    ('P3', [('chars', 'Персонажи'), ('1', 'Сцена 1: комната бабушки'), ('2', 'Сцена 2: комната бабушки'), ('mg', 'Мини-игра «Террариум»')]),
+    ('Z1', [('chars', 'Персонажи'), ('cut', 'Катсцена: коридор у библиотеки'), ('1', 'Сцена: библиотека'), ('mg', 'Мини-игра «Морской бой»')]),
+    ('Z2', [('chars', 'Персонажи'), ('1', 'Сцена 1: площадка'), ('2', 'Сцена 2: комната бабушки'), ('mg', 'Мини-игра «Связка ключей»')]),
+    ('Z3', [('chars', 'Персонажи'), ('1', 'Сцена 1: гараж снаружи'), ('2', 'Сцена 2: гараж внутри'), ('mg', 'Мини-игра «Кодовый замок»')]),
+    ('G1', [('chars', 'Персонажи'), ('1', 'Сцена 1: гостиная у компьютера'), ('2', 'Сцена 2: школьный класс'), ('mg', 'Мини-игра «Синхрофазотрон»')]),
+    ('G2', [('chars', 'Персонажи'), ('1', 'Сцена: кафе'), ('mg', 'Мини-игра «Кроссворд»')]),
+    ('D1', [('chars', 'Персонажи'), ('1', 'Сцена: спальня ночью'), ('mg', 'Мини-игра «Шкаф»')]),
+    ('D2', [('chars', 'Персонажи'), ('1', 'Сцена: подвал'), ('mg', 'Мини-игра «Пентаграмма»')]),
+    ('M2', [('chars', 'Персонажи'), ('1', 'Сцена 1: гостиная у зеркала'), ('2', 'Сцена 2: кабинет Антонова'), ('mg', 'Мини-игра «Челюсть»')]),
+    ('M1', [('chars', 'Персонажи'), ('1', 'Сцена: двор'), ('mg', 'Мини-игра «Шахматный этюд»')]),
+    ('M3', [('chars', 'Персонажи'), ('1', 'Сцена: холл гостиницы'), ('mg', 'Мини-игра «Кофейный автомат»')]),
+    ('F1', [('chars', 'Персонажи'), ('1', 'Сцена 1: гостиная'), ('2', 'Сцена 2: прихожая'), ('3', 'Сцена 3: детская'), ('4', 'Сцена 4: спальня днём'),
+            ('mg', 'Мини-игра «Доска улик»')]),
+    ('F2', [('chars', 'Персонажи'), ('1', 'Сцена 1: кухня ночью'), ('2', 'Сцена 2: комната Папы'), ('mg', 'Мини-игра «Рукопись»')]),
+    ('E1', [('chars', 'Персонажи'), ('1', 'Сцена: купе поезда'), ('beach', 'Финал: пляж'), ('mg', 'Мини-игра «Домино»')]),
+    ('UI', [('Экран поиска', 'Экран поиска'), ('Окна', 'Окна'), ('Меню', 'Меню'), ('Курсоры', 'Курсоры')]),
+]
+LEVEL_TITLES = {'HUB': 'Хаб', 'UI': 'Интерфейс'}
+LATIN = {ru: code for code, (ru, _) in LEVELS.items()}
+FIRST_APPEARANCE = {
+    'Папа': 'P0', 'Маша': 'P0', 'Даша': 'P0', 'Женя': 'P0', 'Галина Сергеевна': 'P0', 'Пуговка': 'P0', 'Тамара (приёмная)': 'P0',
+    'Миша': 'P2', 'Бабушка': 'P3', 'Физрук': 'Z1', 'Т. Ивановна (учительница)': 'G1', 'Полежайкин': 'G1', 'Кассир кафе': 'G2',
+    'Посетитель кафе': 'G2', 'Паук': 'D2', 'Петя': 'D2', 'Антонов': 'M2', 'Дедушка': 'M1', 'Монтёр': 'M1',
+    'Администратор гостиницы': 'M3', 'Издатель': 'M3', 'Сосед по купе': 'E1',
+}
+BACKGROUND_SCENE = {
+    'bg_p0_reception': ('P0', '1'), 'bg_p0_office': ('P0', '2'), 'bg_papa_room_story': ('P0', 'card'), 'bg_folder_closeup': ('P0', 'card'),
+    'bg_hub_living': ('P0', 'hub'), 'bg_kids_room': ('P1', '1'), 'bg_kitchen': ('P1', '2'), 'bg_hallway': ('P1', '4'),
+    'bg_kindergarten': ('P2', '1'), 'bg_granny_room': ('P3', '1'), 'bg_corridor_lib': ('Z1', 'cut'), 'bg_library': ('Z1', '1'),
+    'bg_stairwell': ('Z2', '1'), 'bg_garage_out': ('Z3', '1'), 'bg_garage_in': ('Z3', '2'), 'bg_classroom': ('G1', '2'), 'bg_cafe': ('G2', '1'),
+    'bg_bedroom': ('D1', '1'), 'bg_basement': ('D2', '1'), 'bg_dentist': ('M2', '2'), 'bg_yard': ('M1', '1'), 'bg_hotel': ('M3', '1'),
+    'bgB_papa_room_empty': ('F2', '2'), 'bg_train': ('E1', '1'), 'bg_beach': ('E1', 'beach'),
+}
+# Декор стоит в первой сцене своей локации.
+DECOR_SCENE = {
+    'Приёмная клиники': ('P0', '1'), 'Кабинет Папы в клинике': ('P0', '2'), 'Гостиная': ('P0', 'hub'), 'Детская': ('P1', '1'), 'Кухня': ('P1', '2'),
+    'Прихожая': ('P1', '4'), 'Детский сад': ('P2', '1'), 'Комната бабушки': ('P3', '1'), 'Библиотека': ('Z1', '1'), 'Гараж': ('Z3', '2'),
+    'Школьный класс': ('G1', '2'), 'Кафе': ('G2', '1'), 'Спальня Маши и Даши': ('D1', '1'), 'Кабинет Антонова': ('M2', '2'), 'Двор': ('M1', '1'),
+    'Пляж': ('E1', 'beach'),
+}
+OTHER_SCENE = {
+    'folder_blue_closed': ('P0', 'card'), 'folder_blue_open_empty': ('P0', 'card'), 'folder_blue_open_full': ('F2', '2'),
+    'folder_blue_full': ('F2', '2'), 'proom_desk': ('F2', '2'), 'proom_drawer_open': ('F2', '2'), 'proom_chair': ('F2', '2'),
+    'proom_lamp': ('F2', '2'), 'proom_books': ('F2', '2'), 'gift_parrot_feather': ('F2', '2'), 'paper_hat': ('P2', '1'),
+    'cage_pages': ('G2', '1'), 'crow': ('M1', '1'), 'papa_home_computer': ('P0', 'hub'), 'antonov_printer_jam': ('M2', '2'),
+    'masha_handbag': ('F1', '2'), 'zhenya_sneakers_pink_laces': ('F1', '2'), 'kid_drawing_1': ('P2', '1'), 'kid_drawing_2': ('P2', '1'),
+    'kid_drawing_3': ('P2', '1'), 'mech_kid_chair': ('P1', '1'), 'mech_taburet': ('P1', '1'), 'mech_blocks_set': ('P2', '1'),
+    'mech_zzz': ('P3', '1'),
+}
+
+
 def load(path):
     with open(path, encoding='utf-8') as f:
         return json.load(f)
@@ -237,6 +298,50 @@ def classify(job, used):
     return None
 
 
+def level_title(code):
+    if code in LEVEL_TITLES:
+        return LEVEL_TITLES[code]
+    ru, name = LEVELS[code]
+    return f'{ru} «{name}»'
+
+
+def character_level(job, name, use):
+    if job['id'].startswith('hub_'):
+        return 'HUB'
+    if use == 'Семейный совет и хаб':
+        return 'P0'
+    if use.startswith('Портрет'):
+        return FIRST_APPEARANCE[name]
+    return LATIN[re.search(r'[ПЖГДМФЭ]\d', use).group(0)]
+
+
+def scene_rank():
+    return {(code, key): place for place, (code, key) in enumerate((c, k) for c, keys in LEVEL_PLAN for k, _ in keys)}
+
+
+def level_place(job, kind, name, use, used):
+    """Уровень и строка панели, где задание появляется первым."""
+    i = job['id']
+    if kind == 'Персонажи':
+        return character_level(job, name, use), 'chars'
+    if kind == 'Мини-игры':
+        return LATIN[use.rsplit(', ', 1)[1]], 'mg'
+    if kind == 'Интерфейс':
+        return 'UI', name
+    if i in OTHER_SCENE:
+        return OTHER_SCENE[i]
+    if i in BACKGROUND_SCENE:
+        return BACKGROUND_SCENE[i]
+    if i in used:
+        rank = scene_rank()
+        return min(((r['Level'], r['Scene']) for r in used[i]), key=lambda key: rank[key])
+    if job['group'] == '40_props_reception':
+        return 'P0', '1'
+    if job['group'] == '41_props_office':
+        return 'P0', '2'
+    return DECOR_SCENE[name]
+
+
 def main():
     jobs_path, items_path, csv_path, out = sys.argv[1:5]
     jobs = load(jobs_path)['jobs']
@@ -248,6 +353,7 @@ def main():
     kinds = {'Персонажи': [p[0] for p in PEOPLE], 'Локации': LOCATIONS, 'Мини-игры': [m[0] for m in MINIGAMES],
              'Интерфейс': ['Экран поиска', 'Окна', 'Меню', 'Курсоры'], 'Сюжет': ['Синяя папка', 'Рисунки Пуговки', 'Механики уровней']}
     buckets = {(kind, name): [] for kind, names in kinds.items() for name in names}
+    rows_by_level = {(code, key): [] for code, keys in LEVEL_PLAN for key, _ in keys}
     missing = []
     for order, job in enumerate(jobs):
         found = classify(job, used)
@@ -256,6 +362,7 @@ def main():
             continue
         kind, name, weight, use = found
         buckets[(kind, name)].append((weight, order, job['id'], use))
+        rows_by_level[level_place(job, kind, name, use, used)].append((weight, order, job['id']))
     if missing:
         sys.exit('Задания без раздела:\n' + '\n'.join(missing))
 
@@ -268,12 +375,23 @@ def main():
     placed = sum(len(s['jobs']) for s in sections)
     if placed != len(jobs):
         sys.exit(f'Разложено {placed} из {len(jobs)}')
+    levels = []
+    for code, keys in LEVEL_PLAN:
+        for key, title in keys:
+            entries = rows_by_level[(code, key)]
+            if entries:
+                levels.append({'kind': level_title(code), 'name': title, 'jobs': [{'id': e[2]} for e in sorted(entries)]})
+    if sum(len(s['jobs']) for s in levels) != len(jobs):
+        sys.exit('По уровням разложены не все задания')
     with open(out, 'w', encoding='utf-8', newline='\n') as f:
-        json.dump({'sections': sections}, f, ensure_ascii=False, indent=0)
+        json.dump({'sections': sections, 'levels': levels}, f, ensure_ascii=False, indent=0)
         f.write('\n')
     for s in sections:
         print(f"{s['kind']:<10} {s['name']:<32} {len(s['jobs'])}")
     print('Всего', placed)
+    for s in levels:
+        print(f"{s['kind']:<32} {s['name']:<34} {len(s['jobs'])}")
+    print('Строк уровней', len(levels))
 
 
 if __name__ == '__main__':

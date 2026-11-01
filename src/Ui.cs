@@ -417,7 +417,7 @@ namespace Otbor
                 if (row.Kind != null)
                 {
                     TextRenderer.DrawText(g, row.Kind.ToUpperInvariant(), Theme.Small, new Rectangle(8, y, right - 8, height),
-                        Theme.Warn, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+                        Theme.Warn, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
                     continue;
                 }
                 SectionStat stat = row.Stat;
@@ -1050,6 +1050,8 @@ namespace Otbor
         readonly FlatButton btnOpen = new FlatButton("Открыть папку с нужными", Theme.Panel);
         readonly FlatButton btnGit = new FlatButton("", Theme.Panel);
         readonly FlatButton btnPanel = new FlatButton("Пульт  [G]", Theme.Panel);
+        readonly FlatButton btnBySection = new FlatButton("Разделы", Theme.Panel);
+        readonly FlatButton btnByLevel = new FlatButton("Уровни  [L]", Theme.Panel);
         readonly FlatButton btnNext = new FlatButton("Далее →  [Enter]", Theme.Accent);
         readonly FlatButton btnReview = new FlatButton("Выбранное  [V]", Theme.Panel);
         readonly FlatButton btnPrevPage = new FlatButton("← Страница", Theme.Panel);
@@ -1138,8 +1140,23 @@ namespace Otbor
             lblHint.Dock = DockStyle.Bottom;
             lblHint.BackColor = Theme.Panel;
 
+            var sorting = new TableLayoutPanel { Dock = DockStyle.Top, ColumnCount = 2, RowCount = 1, AutoSize = true, BackColor = Theme.Panel };
+            sorting.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            sorting.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            foreach (FlatButton button in new[] { btnBySection, btnByLevel })
+            {
+                button.AutoSize = false;
+                button.Dock = DockStyle.Fill;
+                button.Height = Theme.Normal.Height + 14;
+                sorting.Controls.Add(button);
+            }
+            var left = new Panel { Dock = DockStyle.Left, Width = sections.Width, BackColor = Theme.Panel };
+            sections.Dock = DockStyle.Fill;
+            left.Controls.Add(sections);
+            left.Controls.Add(sorting);
+
             Controls.Add(grid);
-            Controls.Add(sections);
+            Controls.Add(left);
             Controls.Add(lblHint);
             Controls.Add(buttons);
             Controls.Add(header);
@@ -1153,6 +1170,8 @@ namespace Otbor
             btnGit.Click += (a, b) => GitClicked();
             btnReview.Click += (a, b) => ShowPicked();
             btnPanel.Click += (a, b) => ShowPanel();
+            btnBySection.Click += (a, b) => SetLevels(false);
+            btnByLevel.Click += (a, b) => SetLevels(true);
             btnPrevPage.Click += (a, b) => TurnPage(-1);
             btnNextPage.Click += (a, b) => TurnPage(1);
             btnRedo.Click += (a, b) => Redo();
@@ -1271,8 +1290,17 @@ namespace Otbor
                 case Keys.A: ToggleView(); return true;
                 case Keys.V: ShowPicked(); return true;
                 case Keys.G: ShowPanel(); return true;
+                case Keys.L: SetLevels(!session.Levels); return true;
             }
             return false;
+        }
+
+        void SetLevels(bool on)
+        {
+            if (session.Levels == on) return;
+            returnTo = null;
+            session.SetLevels(on);
+            ShowCurrent(null);
         }
 
         public void ShowPanel()
@@ -1323,6 +1351,7 @@ namespace Otbor
                 case Keys.R: Redo(); return true;
                 case Keys.A: ToggleView(); return true;
                 case Keys.G: ShowPanel(); return true;
+                case Keys.L: SetLevels(!session.Levels); return true;
             }
             return false;
         }
@@ -1331,6 +1360,8 @@ namespace Otbor
         {
             review = null;
             SetReviewMode(false);
+            btnBySection.BackColor = session.Levels ? Theme.Panel : Theme.Accent;
+            btnByLevel.BackColor = session.Levels ? Theme.Accent : Theme.Panel;
             CloseZoom();
             ClearTiles();
             Job job = Current;
@@ -1421,7 +1452,7 @@ namespace Otbor
         {
             Job job = Current;
             if (job != null && session.Review(job.Section).Count > 0) OpenReview(job.Section);
-            else if (session.Done.Count > 0) OpenReview(SectionMap.Of(session.Done[session.Done.Count - 1].Id).Section);
+            else if (session.Done.Count > 0) OpenReview(session.Place(session.Done[session.Done.Count - 1].Id).Section);
             else
             {
                 hintHeld = true;
@@ -1567,7 +1598,7 @@ namespace Otbor
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             base.OnMouseWheel(e);
-            if (sections.Bounds.Contains(PointToClient(Cursor.Position))) sections.Wheel(e.Delta);
+            if (sections.RectangleToScreen(sections.ClientRectangle).Contains(Cursor.Position)) sections.Wheel(e.Delta);
         }
 
         Size CanvasSize(Variant v)

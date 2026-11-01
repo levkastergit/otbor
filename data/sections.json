@@ -3142,5 +3142,2494 @@
 }
 ]
 }
+],
+"levels": [
+{
+"kind": "П0 «Пустая папка»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "char_papa_stand"
+},
+{
+"id": "char_papa_pack"
+},
+{
+"id": "char_papa_phone"
+},
+{
+"id": "char_papa_shock_folder"
+},
+{
+"id": "char_tamara_desk"
+},
+{
+"id": "char_masha_hub"
+},
+{
+"id": "char_dasha_hub"
+},
+{
+"id": "char_zhenya_hub"
+},
+{
+"id": "char_gs_sit"
+},
+{
+"id": "char_pugovka_hub"
+},
+{
+"id": "port_papa_neutral"
+},
+{
+"id": "port_papa_smile"
+},
+{
+"id": "port_papa_worry"
+},
+{
+"id": "port_tamara_neutral"
+},
+{
+"id": "port_tamara_smile"
+},
+{
+"id": "port_masha"
+},
+{
+"id": "port_dasha"
+},
+{
+"id": "port_zhenya"
+},
+{
+"id": "port_gs"
+},
+{
+"id": "port_pugovka"
+}
+]
+},
+{
+"kind": "П0 «Пустая папка»",
+"name": "Сцена 1: приёмная клиники",
+"jobs": [
+{
+"id": "bg_p0_reception"
+},
+{
+"id": "dec_rec_desk"
+},
+{
+"id": "dec_rec_cabinet_closed"
+},
+{
+"id": "dec_rec_cabinet_open"
+},
+{
+"id": "dec_rec_chair"
+},
+{
+"id": "dec_rec_armchair"
+},
+{
+"id": "dec_rec_coatrack"
+},
+{
+"id": "dec_rec_shelf"
+},
+{
+"id": "dec_rec_plant"
+},
+{
+"id": "dec_rec_wallclock"
+},
+{
+"id": "dec_rec_painting"
+},
+{
+"id": "prop_dossier"
+},
+{
+"id": "prop_key"
+},
+{
+"id": "prop_ticket"
+},
+{
+"id": "prop_coffee"
+},
+{
+"id": "prop_napkins"
+},
+{
+"id": "prop_magazine"
+},
+{
+"id": "prop_postcard"
+},
+{
+"id": "prop_sticky_note"
+},
+{
+"id": "prop_bizcard_new"
+},
+{
+"id": "prop_bizcard_old"
+},
+{
+"id": "prop_holepunch"
+},
+{
+"id": "prop_scotch"
+},
+{
+"id": "prop_pins"
+},
+{
+"id": "prop_kettle"
+},
+{
+"id": "prop_pen_cup"
+},
+{
+"id": "prop_desk_clock"
+}
+]
+},
+{
+"kind": "П0 «Пустая папка»",
+"name": "Сцена 2: кабинет Папы",
+"jobs": [
+{
+"id": "bg_p0_office"
+},
+{
+"id": "dec_off_desk"
+},
+{
+"id": "dec_off_armchair"
+},
+{
+"id": "dec_off_wardrobe_closed"
+},
+{
+"id": "dec_off_wardrobe_open"
+},
+{
+"id": "dec_off_bookshelf"
+},
+{
+"id": "dec_off_books_row"
+},
+{
+"id": "dec_off_couch"
+},
+{
+"id": "dec_off_diploma"
+},
+{
+"id": "dec_off_plant"
+},
+{
+"id": "prop_diary"
+},
+{
+"id": "prop_ballpen"
+},
+{
+"id": "prop_mug"
+},
+{
+"id": "prop_calendar"
+},
+{
+"id": "prop_glue"
+},
+{
+"id": "prop_mobile"
+},
+{
+"id": "prop_sunglasses"
+},
+{
+"id": "prop_calculator"
+},
+{
+"id": "prop_inkwell"
+},
+{
+"id": "prop_paper_a4"
+},
+{
+"id": "prop_printer"
+},
+{
+"id": "prop_music_disc"
+},
+{
+"id": "prop_flyswatter"
+},
+{
+"id": "prop_boomerang"
+},
+{
+"id": "prop_flipflops"
+},
+{
+"id": "prop_flask"
+},
+{
+"id": "prop_tonometer"
+},
+{
+"id": "prop_freud_bust"
+}
+]
+},
+{
+"kind": "П0 «Пустая папка»",
+"name": "Мини-игра «Ежедневник»",
+"jobs": [
+{
+"id": "mg_diary_spread"
+},
+{
+"id": "mg_diary_card"
+},
+{
+"id": "mg_diary_sticker"
+}
+]
+},
+{
+"kind": "П0 «Пустая папка»",
+"name": "20:10: комната Папы",
+"jobs": [
+{
+"id": "bg_papa_room_story"
+},
+{
+"id": "bg_folder_closeup"
+},
+{
+"id": "folder_blue_closed"
+},
+{
+"id": "folder_blue_open_empty"
+}
+]
+},
+{
+"kind": "П0 «Пустая папка»",
+"name": "Семейный совет",
+"jobs": [
+{
+"id": "bg_hub_living"
+},
+{
+"id": "dec_hub_sofa"
+},
+{
+"id": "dec_hub_armchair"
+},
+{
+"id": "dec_hub_coffee_table"
+},
+{
+"id": "dec_hub_aquarium"
+},
+{
+"id": "dec_hub_tv"
+},
+{
+"id": "papa_home_computer"
+}
+]
+},
+{
+"kind": "Хаб",
+"name": "Дочери засыпают",
+"jobs": [
+{
+"id": "hub_pug_sleep"
+},
+{
+"id": "hub_zhe_sleep"
+},
+{
+"id": "hub_gs_sleep"
+},
+{
+"id": "hub_mas_sleep"
+},
+{
+"id": "hub_das_sleep"
+}
+]
+},
+{
+"kind": "П1 «Утро»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "papa_sofa_sleep_shirt"
+},
+{
+"id": "papa_sofa_wake_shirt"
+}
+]
+},
+{
+"kind": "П1 «Утро»",
+"name": "Сцена 1: детская",
+"jobs": [
+{
+"id": "bg_kids_room"
+},
+{
+"id": "mech_kid_chair"
+},
+{
+"id": "mech_taburet"
+},
+{
+"id": "dec_kids_drawer_closed"
+},
+{
+"id": "dec_kids_drawer_open"
+},
+{
+"id": "p1_tights"
+},
+{
+"id": "p1_vest"
+},
+{
+"id": "p1_sock"
+},
+{
+"id": "p1_ruler"
+},
+{
+"id": "p1_toy_block"
+},
+{
+"id": "p1_teddy"
+},
+{
+"id": "p1_bunny"
+},
+{
+"id": "p1_felt_pen"
+},
+{
+"id": "p1_football"
+},
+{
+"id": "p1_trophy"
+},
+{
+"id": "p1_pennant"
+},
+{
+"id": "p1_alarm_clock"
+},
+{
+"id": "p1_photo_footballer"
+},
+{
+"id": "p1_globe"
+},
+{
+"id": "p1_encyclopedia"
+},
+{
+"id": "p1_physics_book"
+},
+{
+"id": "p1_reference_book"
+},
+{
+"id": "p1_broken_watch"
+},
+{
+"id": "p1_cactus"
+},
+{
+"id": "p1_elephant_figurine"
+}
+]
+},
+{
+"kind": "П1 «Утро»",
+"name": "Сцена 2: кухня",
+"jobs": [
+{
+"id": "bg_kitchen"
+},
+{
+"id": "dec_kitchen_cupboard_closed"
+},
+{
+"id": "dec_kitchen_cupboard_open"
+},
+{
+"id": "p1_white_bread"
+},
+{
+"id": "p1_pink_mug"
+},
+{
+"id": "p1_sugar_bowl"
+},
+{
+"id": "p1_bread_board"
+},
+{
+"id": "p1_napkin"
+},
+{
+"id": "p1_bagel"
+},
+{
+"id": "p1_tea_box"
+},
+{
+"id": "p1_candy"
+},
+{
+"id": "p1_preserve_jar"
+},
+{
+"id": "p1_preserve_jar_old"
+},
+{
+"id": "p1_tomato_jar"
+},
+{
+"id": "p1_salt"
+},
+{
+"id": "p1_flour"
+},
+{
+"id": "p1_buckwheat"
+},
+{
+"id": "p1_rice"
+},
+{
+"id": "p1_millet"
+}
+]
+},
+{
+"kind": "П1 «Утро»",
+"name": "Сцена 3: гостиная",
+"jobs": [
+{
+"id": "p1_remote"
+},
+{
+"id": "p1_batteries"
+},
+{
+"id": "p1_magazines"
+},
+{
+"id": "p1_perfume"
+},
+{
+"id": "p1_mop"
+},
+{
+"id": "p1_hammer"
+},
+{
+"id": "p1_rocking_horse"
+},
+{
+"id": "p1_thumbtack"
+},
+{
+"id": "p1_book_scifi"
+},
+{
+"id": "p1_book_fantasy"
+},
+{
+"id": "p1_book_detective"
+},
+{
+"id": "p1_book_history"
+},
+{
+"id": "p1_book_tech"
+},
+{
+"id": "p1_book_tales"
+},
+{
+"id": "p1_drawing_paper"
+},
+{
+"id": "p1_talc"
+},
+{
+"id": "p1_bed_linen"
+},
+{
+"id": "p1_blanket"
+},
+{
+"id": "p1_pillow"
+}
+]
+},
+{
+"kind": "П1 «Утро»",
+"name": "Сцена 4: прихожая",
+"jobs": [
+{
+"id": "bg_hallway"
+},
+{
+"id": "dec_shoe_cabinet_closed"
+},
+{
+"id": "dec_shoe_cabinet_open"
+},
+{
+"id": "p1_briefcase"
+},
+{
+"id": "p1_cap"
+},
+{
+"id": "p1_raincoat"
+},
+{
+"id": "p1_comb"
+},
+{
+"id": "p1_cologne"
+},
+{
+"id": "p1_boots"
+},
+{
+"id": "p1_mirror"
+},
+{
+"id": "p1_coin"
+},
+{
+"id": "p1_backpack"
+},
+{
+"id": "p1_knit_hat"
+},
+{
+"id": "p1_jacket"
+},
+{
+"id": "p1_slippers"
+},
+{
+"id": "p1_rubber_boots"
+},
+{
+"id": "p1_masha_shoes"
+}
+]
+},
+{
+"kind": "П2 «Утренник»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "port_misha"
+}
+]
+},
+{
+"kind": "П2 «Утренник»",
+"name": "Сцена: детский сад",
+"jobs": [
+{
+"id": "kid_drawing_1"
+},
+{
+"id": "kid_drawing_2"
+},
+{
+"id": "kid_drawing_3"
+},
+{
+"id": "bg_kindergarten"
+},
+{
+"id": "mech_blocks_set"
+},
+{
+"id": "dec_toybox_closed"
+},
+{
+"id": "dec_toybox_open"
+},
+{
+"id": "paper_hat"
+},
+{
+"id": "p2_pyramid_toy"
+},
+{
+"id": "p2_alphabet_blocks"
+},
+{
+"id": "p2_spinning_top"
+},
+{
+"id": "p2_flag_blue"
+},
+{
+"id": "p2_flag_white"
+},
+{
+"id": "p2_balloon"
+},
+{
+"id": "p2_toy_watch"
+},
+{
+"id": "p2_odd_thing"
+},
+{
+"id": "p2_odd_gizmo"
+},
+{
+"id": "p2_small_part"
+},
+{
+"id": "p2_toy_rat"
+},
+{
+"id": "p2_toy_mouse"
+},
+{
+"id": "p2_toy_pig"
+},
+{
+"id": "p2_toy_dog"
+},
+{
+"id": "p2_toy_geese"
+},
+{
+"id": "p2_toy_car"
+},
+{
+"id": "p2_toy_tractor"
+},
+{
+"id": "p2_toy_dumptruck"
+},
+{
+"id": "p2_toy_train"
+},
+{
+"id": "p2_toy_bigcar"
+},
+{
+"id": "p2_registry"
+},
+{
+"id": "p2_parenting_books"
+},
+{
+"id": "p2_slingshot"
+}
+]
+},
+{
+"kind": "П2 «Утренник»",
+"name": "Мини-игра «Паровозик»",
+"jobs": [
+{
+"id": "mg_rail_straight"
+},
+{
+"id": "mg_rail_curve"
+},
+{
+"id": "mg_rail_switch"
+}
+]
+},
+{
+"kind": "П3 «Бабушкины пауки»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "babushka_sit_sleep"
+},
+{
+"id": "babushka_sit_awake"
+},
+{
+"id": "port_babushka"
+}
+]
+},
+{
+"kind": "П3 «Бабушкины пауки»",
+"name": "Сцена 1: комната бабушки",
+"jobs": [
+{
+"id": "bg_granny_room"
+},
+{
+"id": "mech_zzz"
+},
+{
+"id": "dec_bureau_closed"
+},
+{
+"id": "dec_bureau_open"
+},
+{
+"id": "p3_safety_pin"
+},
+{
+"id": "p3_net"
+},
+{
+"id": "p3_spider_jar"
+},
+{
+"id": "p3_measuring_cup"
+},
+{
+"id": "p3_lid"
+},
+{
+"id": "p3_spider_food"
+},
+{
+"id": "p3_sugar"
+},
+{
+"id": "p3_dish"
+},
+{
+"id": "p3_book_spiders"
+},
+{
+"id": "p3_comic_spider"
+},
+{
+"id": "p3_book_veg"
+},
+{
+"id": "p3_soft_toy"
+},
+{
+"id": "p3_robe"
+},
+{
+"id": "p3_sleeping_bag"
+},
+{
+"id": "p3_paper_note"
+}
+]
+},
+{
+"kind": "П3 «Бабушкины пауки»",
+"name": "Сцена 2: комната бабушки",
+"jobs": [
+{
+"id": "p3_sofa_granny"
+},
+{
+"id": "p3_chair"
+},
+{
+"id": "p3_floor_lamp"
+},
+{
+"id": "p3_small_box"
+},
+{
+"id": "p3_spider_friend"
+},
+{
+"id": "p3_spider_girlfriend"
+},
+{
+"id": "p3_leaf"
+},
+{
+"id": "p3_microscope"
+},
+{
+"id": "p3_figurine"
+}
+]
+},
+{
+"kind": "П3 «Бабушкины пауки»",
+"name": "Мини-игра «Террариум»",
+"jobs": [
+{
+"id": "mg_terra_hole"
+},
+{
+"id": "mg_terra_spider"
+},
+{
+"id": "mg_terra_murzik"
+}
+]
+},
+{
+"kind": "Ж1 «Физра»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "zhenya_throw"
+},
+{
+"id": "zhenya_run"
+},
+{
+"id": "fizruk_whistle"
+},
+{
+"id": "port_fizruk"
+}
+]
+},
+{
+"kind": "Ж1 «Физра»",
+"name": "Катсцена: коридор у библиотеки",
+"jobs": [
+{
+"id": "bg_corridor_lib"
+}
+]
+},
+{
+"kind": "Ж1 «Физра»",
+"name": "Сцена: библиотека",
+"jobs": [
+{
+"id": "bg_library"
+},
+{
+"id": "dec_lib_cart"
+},
+{
+"id": "z1_pingpong_ball"
+},
+{
+"id": "z1_hoop"
+},
+{
+"id": "z1_jump_rope"
+},
+{
+"id": "z1_volleyball"
+},
+{
+"id": "z1_rugby_ball"
+},
+{
+"id": "z1_baton"
+},
+{
+"id": "z1_stopwatch"
+},
+{
+"id": "z1_whistle"
+},
+{
+"id": "z1_baseball_cap"
+},
+{
+"id": "z1_spoon"
+},
+{
+"id": "z1_cup"
+},
+{
+"id": "z1_coffee_pot"
+},
+{
+"id": "z1_jug"
+},
+{
+"id": "z1_water_carafe"
+},
+{
+"id": "z1_binoculars"
+},
+{
+"id": "z1_start_pistol"
+},
+{
+"id": "z1_discus"
+},
+{
+"id": "z1_compass"
+},
+{
+"id": "z1_pointer"
+},
+{
+"id": "z1_hourglass"
+},
+{
+"id": "z1_spray_can"
+},
+{
+"id": "z1_ski_wax"
+},
+{
+"id": "z1_tambourine"
+},
+{
+"id": "z1_pump"
+}
+]
+},
+{
+"kind": "Ж1 «Физра»",
+"name": "Мини-игра «Морской бой»",
+"jobs": [
+{
+"id": "mg_sea_sheet"
+},
+{
+"id": "mg_sea_ship1"
+},
+{
+"id": "mg_sea_ship2"
+},
+{
+"id": "mg_sea_ship3"
+},
+{
+"id": "mg_sea_ship4"
+},
+{
+"id": "mg_sea_hit"
+},
+{
+"id": "mg_sea_miss"
+}
+]
+},
+{
+"kind": "Ж2 «Захлопнулась»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "babushka_white_jacket"
+},
+{
+"id": "zhenya_hairdryer"
+}
+]
+},
+{
+"kind": "Ж2 «Захлопнулась»",
+"name": "Сцена 1: площадка",
+"jobs": [
+{
+"id": "bg_stairwell"
+},
+{
+"id": "z2_door_vasnetsov"
+},
+{
+"id": "z2_doorbell"
+},
+{
+"id": "z2_door_granny"
+}
+]
+},
+{
+"kind": "Ж2 «Захлопнулась»",
+"name": "Сцена 2: комната бабушки",
+"jobs": [
+{
+"id": "z2_book_romance"
+},
+{
+"id": "z2_book_bees"
+}
+]
+},
+{
+"kind": "Ж2 «Захлопнулась»",
+"name": "Мини-игра «Связка ключей»",
+"jobs": [
+{
+"id": "mg_key_1"
+},
+{
+"id": "mg_key_2"
+},
+{
+"id": "mg_key_3"
+},
+{
+"id": "mg_key_4"
+},
+{
+"id": "mg_key_5"
+},
+{
+"id": "mg_key_6"
+},
+{
+"id": "mg_key_7"
+},
+{
+"id": "mg_key_8"
+},
+{
+"id": "mg_lock_closed"
+},
+{
+"id": "mg_lock_open"
+}
+]
+},
+{
+"kind": "Ж3 «Гараж»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "zhenya_reach"
+}
+]
+},
+{
+"kind": "Ж3 «Гараж»",
+"name": "Сцена 1: гараж снаружи",
+"jobs": [
+{
+"id": "bg_garage_out"
+},
+{
+"id": "z3_padlock"
+}
+]
+},
+{
+"kind": "Ж3 «Гараж»",
+"name": "Сцена 2: гараж внутри",
+"jobs": [
+{
+"id": "bg_garage_in"
+},
+{
+"id": "dec_metal_cabinet_closed"
+},
+{
+"id": "dec_metal_cabinet_open"
+},
+{
+"id": "z3_planks"
+},
+{
+"id": "z3_wheelbarrow"
+},
+{
+"id": "z3_wheel"
+},
+{
+"id": "z3_bucket"
+},
+{
+"id": "z3_sled"
+},
+{
+"id": "z3_screwdriver_el"
+},
+{
+"id": "z3_driver_bit"
+},
+{
+"id": "z3_handsaw"
+},
+{
+"id": "z3_pruner"
+},
+{
+"id": "z3_grinder"
+},
+{
+"id": "z3_welder"
+},
+{
+"id": "z3_pipe"
+},
+{
+"id": "z3_sombrero"
+},
+{
+"id": "z3_swim_cap"
+},
+{
+"id": "z3_float"
+},
+{
+"id": "z3_flipflops"
+},
+{
+"id": "z3_dive_mask"
+},
+{
+"id": "z3_fishing_rod"
+},
+{
+"id": "z3_fins"
+},
+{
+"id": "z3_air_mattress"
+},
+{
+"id": "z3_harpoon"
+},
+{
+"id": "z3_speargun"
+},
+{
+"id": "z3_water_pistol"
+},
+{
+"id": "z3_umbrella"
+},
+{
+"id": "z3_cucumber_jar"
+}
+]
+},
+{
+"kind": "Ж3 «Гараж»",
+"name": "Мини-игра «Кодовый замок»",
+"jobs": [
+{
+"id": "ui_codelock_ball"
+},
+{
+"id": "mg_code_star"
+},
+{
+"id": "mg_code_moon"
+},
+{
+"id": "mg_code_sun"
+},
+{
+"id": "mg_code_heart"
+},
+{
+"id": "mg_code_clover"
+},
+{
+"id": "mg_code_key"
+},
+{
+"id": "mg_code_drum"
+},
+{
+"id": "mg_code_bull"
+},
+{
+"id": "mg_code_cow"
+}
+]
+},
+{
+"kind": "Г1 «Контрольная»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "uchilka_board_back"
+},
+{
+"id": "gs_red_pen"
+},
+{
+"id": "gs_backpack"
+},
+{
+"id": "uchilka_front"
+},
+{
+"id": "port_uchilka"
+},
+{
+"id": "port_polezhaikin"
+}
+]
+},
+{
+"kind": "Г1 «Контрольная»",
+"name": "Сцена 1: гостиная у компьютера",
+"jobs": [
+{
+"id": "g1_scrap"
+},
+{
+"id": "g1_psu"
+},
+{
+"id": "g1_cable"
+},
+{
+"id": "g1_extension"
+},
+{
+"id": "g1_keyboard"
+},
+{
+"id": "g1_monitor"
+},
+{
+"id": "g1_tower"
+},
+{
+"id": "g1_console_cable"
+},
+{
+"id": "g1_console"
+},
+{
+"id": "g1_doll_head"
+},
+{
+"id": "g1_doll_body"
+},
+{
+"id": "g1_doll_arm"
+},
+{
+"id": "g1_doll_leg"
+},
+{
+"id": "g1_doll_dress"
+},
+{
+"id": "g1_doll_glasha"
+},
+{
+"id": "g1_box_almost"
+},
+{
+"id": "g1_box_empty"
+}
+]
+},
+{
+"kind": "Г1 «Контрольная»",
+"name": "Сцена 2: школьный класс",
+"jobs": [
+{
+"id": "bg_classroom"
+},
+{
+"id": "dec_off_lamp"
+},
+{
+"id": "dec_school_desk"
+},
+{
+"id": "g1_beaker"
+},
+{
+"id": "g1_weight"
+},
+{
+"id": "g1_voltmeter"
+},
+{
+"id": "g1_phasotron"
+},
+{
+"id": "g1_superconductor"
+},
+{
+"id": "g1_transglucator"
+},
+{
+"id": "g1_flashcards"
+},
+{
+"id": "g1_chalk"
+},
+{
+"id": "g1_book_diy"
+},
+{
+"id": "g1_rag"
+},
+{
+"id": "g1_chalk_box"
+},
+{
+"id": "g1_pencil_case"
+},
+{
+"id": "g1_notebook_stack"
+},
+{
+"id": "g1_notebook"
+},
+{
+"id": "g1_worksheet"
+},
+{
+"id": "g1_notes"
+},
+{
+"id": "g1_pencils"
+},
+{
+"id": "g1_satchel"
+}
+]
+},
+{
+"kind": "Г1 «Контрольная»",
+"name": "Мини-игра «Синхрофазотрон»",
+"jobs": [
+{
+"id": "mg_circ_psu"
+},
+{
+"id": "mg_circ_coil"
+},
+{
+"id": "mg_circ_magnet"
+},
+{
+"id": "mg_circ_switch"
+},
+{
+"id": "mg_circ_wire"
+},
+{
+"id": "mg_circ_bulb"
+}
+]
+},
+{
+"kind": "Г2 «Говорящий попугай»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "gs_explain"
+},
+{
+"id": "kassir"
+},
+{
+"id": "port_posetitel"
+},
+{
+"id": "port_kassir"
+}
+]
+},
+{
+"kind": "Г2 «Говорящий попугай»",
+"name": "Сцена: кафе",
+"jobs": [
+{
+"id": "bg_cafe"
+},
+{
+"id": "dec_cafe_vitrine"
+},
+{
+"id": "dec_cafe_table"
+},
+{
+"id": "cage_pages"
+},
+{
+"id": "g2_pizza_slice"
+},
+{
+"id": "g2_tray"
+},
+{
+"id": "g2_corkscrew"
+},
+{
+"id": "g2_grater"
+},
+{
+"id": "g2_ladle"
+},
+{
+"id": "g2_apple_slicer"
+},
+{
+"id": "g2_mustard"
+},
+{
+"id": "g2_ketchup"
+},
+{
+"id": "g2_napkin_holder"
+},
+{
+"id": "g2_bread_bin"
+},
+{
+"id": "g2_besom"
+},
+{
+"id": "g2_newspaper"
+},
+{
+"id": "g2_books"
+},
+{
+"id": "g2_paper_bag"
+},
+{
+"id": "g2_bottle"
+},
+{
+"id": "g2_glass"
+},
+{
+"id": "g2_banana"
+},
+{
+"id": "g2_apple"
+},
+{
+"id": "g2_chicken_leg"
+},
+{
+"id": "g2_donut"
+},
+{
+"id": "g2_sandwich"
+},
+{
+"id": "g2_potatoes"
+},
+{
+"id": "g2_cat"
+},
+{
+"id": "g2_painting"
+},
+{
+"id": "g2_plate"
+}
+]
+},
+{
+"kind": "Г2 «Говорящий попугай»",
+"name": "Мини-игра «Кроссворд»",
+"jobs": [
+{
+"id": "mg_cross_page"
+}
+]
+},
+{
+"kind": "Д1 «Чёрная комната»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "masha_sleep_bed"
+},
+{
+"id": "masha_woken_bed"
+},
+{
+"id": "dasha_flashlight"
+}
+]
+},
+{
+"kind": "Д1 «Чёрная комната»",
+"name": "Сцена: спальня ночью",
+"jobs": [
+{
+"id": "bg_bedroom"
+},
+{
+"id": "dec_bed_black"
+},
+{
+"id": "dec_bed_red"
+},
+{
+"id": "dec_dresser_mirror"
+},
+{
+"id": "dec_wardrobe_closed"
+},
+{
+"id": "dec_wardrobe_open"
+},
+{
+"id": "d1_dagger"
+},
+{
+"id": "d1_candlestick"
+},
+{
+"id": "d1_cross"
+},
+{
+"id": "d1_rosary"
+},
+{
+"id": "d1_goblet"
+},
+{
+"id": "d1_mask"
+},
+{
+"id": "d1_necronomicon"
+},
+{
+"id": "d1_witch_book"
+},
+{
+"id": "d1_hairpin"
+},
+{
+"id": "d1_mascara"
+},
+{
+"id": "d1_eyeshadow"
+},
+{
+"id": "d1_nail_file"
+},
+{
+"id": "d1_tweezers_cosm"
+},
+{
+"id": "d1_clippers"
+},
+{
+"id": "d1_hairspray"
+},
+{
+"id": "d1_broken_lamp"
+},
+{
+"id": "d1_lamp"
+},
+{
+"id": "d1_wall_light"
+},
+{
+"id": "d1_poster"
+}
+]
+},
+{
+"kind": "Д1 «Чёрная комната»",
+"name": "Мини-игра «Шкаф»",
+"jobs": [
+{
+"id": "mg_ward_drawer"
+},
+{
+"id": "mg_ward_sweater"
+},
+{
+"id": "mg_ward_jeans"
+},
+{
+"id": "mg_ward_scarf"
+},
+{
+"id": "mg_ward_dress"
+},
+{
+"id": "mg_ward_towels"
+},
+{
+"id": "mg_ward_socks"
+},
+{
+"id": "mg_ward_jacket"
+}
+]
+},
+{
+"kind": "Д2 «Ритуал»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "dasha_candle"
+},
+{
+"id": "dasha_chalk"
+},
+{
+"id": "port_pauk"
+},
+{
+"id": "port_petya"
+}
+]
+},
+{
+"kind": "Д2 «Ритуал»",
+"name": "Сцена: подвал",
+"jobs": [
+{
+"id": "bg_basement"
+},
+{
+"id": "d2_candle"
+},
+{
+"id": "d2_chalks"
+},
+{
+"id": "d2_matches"
+},
+{
+"id": "d2_fate_book"
+},
+{
+"id": "d2_pentagram"
+},
+{
+"id": "d2_marker"
+},
+{
+"id": "d2_cd"
+},
+{
+"id": "d2_boombox"
+},
+{
+"id": "d2_pipe_joint"
+},
+{
+"id": "d2_funnel"
+},
+{
+"id": "d2_tin_can"
+},
+{
+"id": "d2_hose"
+},
+{
+"id": "d2_belt"
+},
+{
+"id": "d2_steering_wheel"
+},
+{
+"id": "d2_pedal"
+},
+{
+"id": "d2_paper_boat"
+},
+{
+"id": "d2_tshirt"
+},
+{
+"id": "d2_boot"
+}
+]
+},
+{
+"kind": "Д2 «Ритуал»",
+"name": "Мини-игра «Пентаграмма»",
+"jobs": [
+{
+"id": "mg_penta_bg"
+}
+]
+},
+{
+"kind": "М2 «Зубной»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "antonov_stand"
+},
+{
+"id": "port_antonov"
+}
+]
+},
+{
+"kind": "М2 «Зубной»",
+"name": "Сцена 1: гостиная у зеркала",
+"jobs": [
+{
+"id": "p1_hand_cream"
+},
+{
+"id": "m2_wrapper"
+},
+{
+"id": "m2_lipstick"
+},
+{
+"id": "m2_hairdryer"
+},
+{
+"id": "m2_headphones"
+},
+{
+"id": "m2_player"
+},
+{
+"id": "m2_album"
+},
+{
+"id": "m2_scissors_half"
+},
+{
+"id": "m2_socks"
+},
+{
+"id": "m2_toilet_water"
+},
+{
+"id": "m2_shampoo"
+},
+{
+"id": "m2_jewel_box"
+}
+]
+},
+{
+"kind": "М2 «Зубной»",
+"name": "Сцена 2: кабинет Антонова",
+"jobs": [
+{
+"id": "bg_dentist"
+},
+{
+"id": "dec_glass_cabinet_closed"
+},
+{
+"id": "dec_glass_cabinet_open"
+},
+{
+"id": "dec_dentist_chair"
+},
+{
+"id": "antonov_printer_jam"
+},
+{
+"id": "m2_shoe_covers"
+},
+{
+"id": "m2_gauze_mask"
+},
+{
+"id": "m2_cotton"
+},
+{
+"id": "m2_towel"
+},
+{
+"id": "m2_syringe"
+},
+{
+"id": "m2_spatula"
+},
+{
+"id": "m2_documents"
+},
+{
+"id": "m2_book_dental"
+},
+{
+"id": "m2_test_tubes"
+},
+{
+"id": "m2_flasks"
+},
+{
+"id": "m2_shaker"
+},
+{
+"id": "m2_ultrasonic"
+},
+{
+"id": "m2_filler"
+},
+{
+"id": "m2_thermos"
+}
+]
+},
+{
+"kind": "М2 «Зубной»",
+"name": "Мини-игра «Челюсть»",
+"jobs": [
+{
+"id": "mg_jaw_open"
+},
+{
+"id": "mg_tweezers"
+}
+]
+},
+{
+"kind": "М1 «Двор»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "dasha_wax_walk"
+},
+{
+"id": "pauk_wax_walk"
+},
+{
+"id": "petya_wax_walk"
+},
+{
+"id": "dedushka_chess"
+},
+{
+"id": "monter_manhole"
+},
+{
+"id": "port_monter"
+},
+{
+"id": "port_dedushka"
+}
+]
+},
+{
+"kind": "М1 «Двор»",
+"name": "Сцена: двор",
+"jobs": [
+{
+"id": "bg_yard"
+},
+{
+"id": "dec_yard_bench"
+},
+{
+"id": "crow"
+},
+{
+"id": "m1_chess_piece"
+},
+{
+"id": "m1_useful_thing"
+},
+{
+"id": "m1_pliers"
+},
+{
+"id": "m1_pipe_wrench"
+},
+{
+"id": "m1_screwdriver"
+},
+{
+"id": "m1_file"
+},
+{
+"id": "m1_tape_measure"
+},
+{
+"id": "m1_wire"
+},
+{
+"id": "m1_grease"
+},
+{
+"id": "m1_flashlight"
+},
+{
+"id": "m1_wrench"
+},
+{
+"id": "m1_kefir"
+},
+{
+"id": "m1_brick"
+},
+{
+"id": "m1_crowbar"
+},
+{
+"id": "m1_manhole_cover"
+},
+{
+"id": "m1_pocket_mirror"
+}
+]
+},
+{
+"kind": "М1 «Двор»",
+"name": "Мини-игра «Шахматный этюд»",
+"jobs": [
+{
+"id": "mg_chess_board"
+},
+{
+"id": "mg_chess_white"
+},
+{
+"id": "mg_chess_black"
+}
+]
+},
+{
+"kind": "М3 «Издатель»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "izdatel_sit_read"
+},
+{
+"id": "publisher"
+},
+{
+"id": "masha_phone"
+},
+{
+"id": "masha_papers"
+},
+{
+"id": "masha_persuade"
+},
+{
+"id": "admin_desk"
+},
+{
+"id": "port_admin"
+},
+{
+"id": "port_izdatel"
+}
+]
+},
+{
+"kind": "М3 «Издатель»",
+"name": "Сцена: холл гостиницы",
+"jobs": [
+{
+"id": "bg_hotel"
+},
+{
+"id": "m3_broken_glasses"
+},
+{
+"id": "m3_hat"
+},
+{
+"id": "m3_empty_bottle"
+},
+{
+"id": "m3_seashell"
+},
+{
+"id": "m3_camera"
+},
+{
+"id": "m3_cards"
+},
+{
+"id": "m3_stamp"
+},
+{
+"id": "m3_letters"
+},
+{
+"id": "m3_leaflets"
+},
+{
+"id": "m3_desk_set"
+},
+{
+"id": "m3_telephone"
+},
+{
+"id": "m3_swim_ring"
+},
+{
+"id": "m3_travel_bag"
+},
+{
+"id": "m3_crisps"
+}
+]
+},
+{
+"kind": "М3 «Издатель»",
+"name": "Мини-игра «Кофейный автомат»",
+"jobs": [
+{
+"id": "plinko_board"
+},
+{
+"id": "mg_plinko_cup"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "papa_point"
+},
+{
+"id": "papa_think"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Сцена 1: гостиная",
+"jobs": [
+{
+"id": "f1_wristwatch"
+},
+{
+"id": "f1_vase"
+},
+{
+"id": "f1_domino_box"
+},
+{
+"id": "f1_panama"
+},
+{
+"id": "f1_iron"
+},
+{
+"id": "f1_ironing_board"
+},
+{
+"id": "f1_vacuum"
+},
+{
+"id": "f1_vacuum_hose"
+},
+{
+"id": "f1_sprayer"
+},
+{
+"id": "f1_fish_food"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Сцена 2: прихожая",
+"jobs": [
+{
+"id": "masha_handbag"
+},
+{
+"id": "zhenya_sneakers_pink_laces"
+},
+{
+"id": "f1_sneakers_nolaces"
+},
+{
+"id": "f1_football_boots"
+},
+{
+"id": "f1_shoes"
+},
+{
+"id": "f1_sandals"
+},
+{
+"id": "f1_gk_gloves"
+},
+{
+"id": "f1_boxing_gloves"
+},
+{
+"id": "f1_helmet"
+},
+{
+"id": "f1_knee_pads"
+},
+{
+"id": "f1_shuttlecock"
+},
+{
+"id": "f1_bat"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Сцена 3: детская",
+"jobs": [
+{
+"id": "f1_telescope"
+},
+{
+"id": "f1_world_map"
+},
+{
+"id": "f1_diploma"
+},
+{
+"id": "f1_pyramid"
+},
+{
+"id": "f1_stapler"
+},
+{
+"id": "f1_roly_poly"
+},
+{
+"id": "f1_buratino"
+},
+{
+"id": "f1_crocodile"
+},
+{
+"id": "f1_duck"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Сцена 4: спальня днём",
+"jobs": [
+{
+"id": "f1_doll"
+},
+{
+"id": "f1_scales"
+},
+{
+"id": "f1_daisy"
+},
+{
+"id": "f1_glasses"
+},
+{
+"id": "f1_chest"
+},
+{
+"id": "f1_skull"
+},
+{
+"id": "f1_mat"
+},
+{
+"id": "f1_yellow_dress"
+}
+]
+},
+{
+"kind": "Ф1 «Пять версий»",
+"name": "Мини-игра «Доска улик»",
+"jobs": [
+{
+"id": "mg_evid_board"
+},
+{
+"id": "mg_evid_card"
+},
+{
+"id": "mg_evid_pin"
+}
+]
+},
+{
+"kind": "Ф2 «Ночь перед понедельником»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "papa_sneak"
+},
+{
+"id": "papa_sort_pages"
+},
+{
+"id": "night_pug"
+},
+{
+"id": "night_zhe"
+},
+{
+"id": "night_gs"
+},
+{
+"id": "night_das"
+},
+{
+"id": "night_mas"
+}
+]
+},
+{
+"kind": "Ф2 «Ночь перед понедельником»",
+"name": "Сцена 1: кухня ночью",
+"jobs": [
+{
+"id": "f2_sponge"
+},
+{
+"id": "f2_pepper_shaker"
+}
+]
+},
+{
+"kind": "Ф2 «Ночь перед понедельником»",
+"name": "Сцена 2: комната Папы",
+"jobs": [
+{
+"id": "folder_blue_open_full"
+},
+{
+"id": "bgB_papa_room_empty"
+},
+{
+"id": "folder_blue_full"
+},
+{
+"id": "proom_desk"
+},
+{
+"id": "proom_drawer_open"
+},
+{
+"id": "proom_chair"
+},
+{
+"id": "proom_lamp"
+},
+{
+"id": "proom_books"
+},
+{
+"id": "gift_parrot_feather"
+},
+{
+"id": "f2_paper_pack"
+},
+{
+"id": "f2_red_pen"
+},
+{
+"id": "f2_candle_stub"
+}
+]
+},
+{
+"kind": "Ф2 «Ночь перед понедельником»",
+"name": "Мини-игра «Рукопись»",
+"jobs": [
+{
+"id": "page_gs"
+},
+{
+"id": "page_masha"
+},
+{
+"id": "page_zhenya"
+},
+{
+"id": "page_dasha"
+},
+{
+"id": "mg_page_blank"
+},
+{
+"id": "mg_page_stack"
+},
+{
+"id": "mg_book_cover_blank"
+}
+]
+},
+{
+"kind": "Э1 «Поезд»",
+"name": "Персонажи",
+"jobs": [
+{
+"id": "papa_read_book"
+},
+{
+"id": "polezhaikin_train_belt"
+},
+{
+"id": "sosed_domino"
+},
+{
+"id": "port_sosed"
+}
+]
+},
+{
+"kind": "Э1 «Поезд»",
+"name": "Сцена: купе поезда",
+"jobs": [
+{
+"id": "bg_train"
+},
+{
+"id": "e1_tennis_racket"
+},
+{
+"id": "e1_pingpong_paddle"
+},
+{
+"id": "e1_dumbbells"
+}
+]
+},
+{
+"kind": "Э1 «Поезд»",
+"name": "Финал: пляж",
+"jobs": [
+{
+"id": "bg_beach"
+},
+{
+"id": "dec_beach_umbrella"
+},
+{
+"id": "dec_deck_chair"
+}
+]
+},
+{
+"kind": "Э1 «Поезд»",
+"name": "Мини-игра «Домино»",
+"jobs": [
+{
+"id": "mg_domino_tile"
+},
+{
+"id": "mg_domino_back"
+}
+]
+},
+{
+"kind": "Интерфейс",
+"name": "Экран поиска",
+"jobs": [
+{
+"id": "ui_panel_bottom"
+},
+{
+"id": "ui_panel_tasklist"
+},
+{
+"id": "ui_portrait_frame"
+},
+{
+"id": "ui_score_plate"
+},
+{
+"id": "ui_combo_frame"
+},
+{
+"id": "ui_combo_circle_empty"
+},
+{
+"id": "ui_combo_circle_full"
+},
+{
+"id": "ui_toast_plate"
+},
+{
+"id": "ui_btn_round"
+},
+{
+"id": "ui_btn_large"
+},
+{
+"id": "ui_icon_page"
+},
+{
+"id": "ui_noise_meter"
+}
+]
+},
+{
+"kind": "Интерфейс",
+"name": "Окна",
+"jobs": [
+{
+"id": "ui_dialog_window"
+},
+{
+"id": "ui_rules_card"
+},
+{
+"id": "ui_story_frame"
+}
+]
+},
+{
+"kind": "Интерфейс",
+"name": "Меню",
+"jobs": [
+{
+"id": "ui_menu_bg"
+},
+{
+"id": "ui_logo_plate"
+},
+{
+"id": "ui_level_card_open"
+},
+{
+"id": "ui_level_card_locked"
+},
+{
+"id": "ui_app_icon"
+}
+]
+},
+{
+"kind": "Интерфейс",
+"name": "Курсоры",
+"jobs": [
+{
+"id": "ui_cursor_arrow"
+},
+{
+"id": "ui_cursor_hand"
+},
+{
+"id": "ui_cursor_lock"
+},
+{
+"id": "ui_cursor_chair"
+},
+{
+"id": "ui_cursor_forbidden"
+}
+]
+}
 ]
 }

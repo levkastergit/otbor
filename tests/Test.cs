@@ -681,6 +681,120 @@ namespace Otbor
             Pump(20);
         }
 
+        static void TestLevels()
+        {
+            Func<string, string> at = id => SectionMap.Level(id).Section.Kind + " / " + SectionMap.Level(id).Section.Name;
+            Check(at("bg_p0_reception") == "П0 «Пустая папка» / Сцена 1: приёмная клиники", "первая сцена пролога: " + at("bg_p0_reception"));
+            Check(at("bg_p0_office") == "П0 «Пустая папка» / Сцена 2: кабинет Папы", "вторая сцена пролога: " + at("bg_p0_office"));
+            Check(at("mg_diary_card") == "П0 «Пустая папка» / Мини-игра «Ежедневник»", "мини-игра в своём уровне: " + at("mg_diary_card"));
+            Check(at("p1_tights") == "П1 «Утро» / Сцена 1: детская", "предмет в своей сцене: " + at("p1_tights"));
+            Check(at("masha_sleep_bed") == "Д1 «Чёрная комната» / Персонажи", "поза на своём уровне: " + at("masha_sleep_bed"));
+            Check(at("dec_bed_red") == "Д1 «Чёрная комната» / Сцена: спальня ночью", "кровать там же: " + at("dec_bed_red"));
+            Check(at("port_dedushka") == "М1 «Двор» / Персонажи", "портрет на уровне, где персонаж появляется: " + at("port_dedushka"));
+            Check(at("hub_das_sleep") == "Хаб / Дочери засыпают", "хаб отдельно: " + at("hub_das_sleep"));
+            Check(at("ui_panel_bottom") == "Интерфейс / Экран поиска", "интерфейс вне уровней: " + at("ui_panel_bottom"));
+            Check(SectionMap.Level("p1_tights").Goes == SectionMap.Of("p1_tights").Goes, "«Куда идёт» одна для обоих видов");
+            Check(SectionMap.Level("dec_dentist_chair").Section.Index < SectionMap.Level("dedushka_chess").Section.Index, "М2 идёт раньше М1, как в игре");
+            Check(SectionMap.Level("нет такого").Section == SectionMap.Other, "неизвестное задание в конце");
+
+            string root = Fresh("levels");
+            foreach (string job in MixedJobs)
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true);
+            }
+            var s = new Session(root);
+            string bySections = Ids(s);
+            Check(!s.Levels, "сначала вид по разделам");
+            s.SetLevels(true);
+            Check(Ids(s) == "char_papa_stand,char_dasha_hub,port_dasha,bg_kids_room,dec_kids_drawer_closed,p1_tights," +
+                            "mg_sea_sheet,dasha_flashlight,dasha_candle,ui_panel_bottom,unknown_job", "порядок прохождения: " + Ids(s));
+            Check(s.Queue[0].Section.Kind == "П0 «Пустая папка»" && s.Queue[0].Goes == "П0, обе сцены", "у задания раздел уровня и строка «Куда идёт»");
+            Check(s.Stats().First().Section.Name == "Персонажи" && s.Stats().First().Total == 3, "счётчик по строке уровня");
+
+            s.Decide(s.Queue[0], new[] { s.Queue[0].Id + "__ref_1" });
+            s = new Session(root);
+            Check(s.Levels && s.Queue[0].Id == "char_dasha_hub", "вид запоминается после перезапуска");
+            Section first = s.Queue[0].Section;
+            Check(s.Review(first).Count == 1 && s.Review(first)[0].Decision.Id == "char_papa_stand", "обзор работает в виде по уровням");
+            string[] lines = File.ReadAllText(Path.Combine(root, Session.ChoiceFile), Encoding.UTF8).Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            Check(lines[0].StartsWith("Раздел;Уровень;") && lines[1].Contains("Персонажи: Папа") && lines[1].Contains("П0 «Пустая папка»: Персонажи"),
+                "в выбор.csv есть и раздел, и уровень: " + lines[1]);
+            s.Skip();
+            Check(s.Queue[0].Id == "port_dasha" && s.Queue[1].Id == "char_dasha_hub", "«Пропустить» работает внутри строки уровня");
+            Decision undone = s.Undo();
+            Check(undone.Id == "char_papa_stand" && s.Queue[0].Section.Kind == "П0 «Пустая папка»", "«Назад» возвращает задание с разделом уровня");
+            s.SetLevels(false);
+            Check(Ids(s) == bySections, "обратно к разделам: прежний порядок");
+            Check(!new Session(root).Levels, "выбор разделов тоже запоминается");
+        }
+
+        static void TestLevelsUi()
+        {
+            string root = Fresh("levelsui");
+            foreach (string job in MixedJobs)
+            {
+                string[] part = job.Split('/');
+                MakeJob(root, part[0], part[1], true, 64, 64);
+            }
+            var s = new Session(root);
+            var form = new MainForm(s, Offline());
+            form.WindowState = FormWindowState.Normal;
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = Point.Empty;
+            form.Size = new Size(1280, 800);
+            form.Show();
+            Pump(100);
+            WaitImages(form);
+            FlatButton bySection = Find<FlatButton>(form).First(b => b.Text == "Разделы");
+            FlatButton byLevel = Find<FlatButton>(form).First(b => b.Text.StartsWith("Уровни"));
+            Check(bySection.BackColor == Theme.Accent && byLevel.BackColor == Theme.Panel, "подсвечен текущий вид");
+            Key(form, Keys.D1);
+            RealClick(byLevel);
+            WaitImages(form);
+            Check(s.Levels && byLevel.BackColor == Theme.Accent && bySection.BackColor == Theme.Panel, "клик включает вид по уровням");
+            Check(s.Queue[0].Id == "char_papa_stand" && Tiles(form).All(t => !t.Marked), "очередь начинается с пролога");
+            Check(Find<Label>(form).Any(l => l.Text.StartsWith("П0 «Пустая папка»: Персонажи, 1 из 3")), "в шапке уровень и строка");
+
+            SectionList list = Find<SectionList>(form).Single();
+            int height = Theme.Small.Height + 8;
+            // строки: П0, Персонажи, П1, Сцена 1: детская, Ж1, Морской бой
+            var at = (IntPtr)(((3 * height + height / 2) << 16) | 40);
+            SendMessage(list.Handle, WM_LBUTTONDOWN, (IntPtr)1, at);
+            SendMessage(list.Handle, WM_LBUTTONUP, IntPtr.Zero, at);
+            Pump(40);
+            Check(s.Queue[0].Id == "bg_kids_room", "клик по строке уровня открывает её: " + s.Queue[0].Id);
+            WaitImages(form);
+
+            Key(form, Keys.D1);
+            Key(form, Keys.Enter);
+            Pump(40);
+            WaitImages(form);
+            Key(form, Keys.D1);
+            Key(form, Keys.Enter);
+            Pump(40);
+            WaitImages(form);
+            Key(form, Keys.D1);
+            Key(form, Keys.Enter);
+            Pump(40);
+            Check(s.Queue[0].Id == "mg_sea_sheet", "строка закончилась, очередь идёт к следующему уровню: " + s.Queue[0].Id);
+            Label hint = Find<Label>(form).First(l => l.Dock == DockStyle.Bottom);
+            Check(hint.Text.Contains("«Сцена 1: детская» закончен"), "подсказка про конец строки: " + hint.Text);
+            WaitImages(form);
+            Key(form, Keys.V);
+            Pump(120);
+            Check(Title(form).Text == "Выбранное: Сцена 1: детская" && Tiles(form).Count == 3, "обзор строки уровня: " + Title(form).Text);
+            Key(form, Keys.L);
+            Pump(40);
+            WaitImages(form);
+            Check(!s.Levels && Find<FlatButton>(form).Any(b => b.Visible && b.Text.StartsWith("Далее")), "L из обзора возвращает к отбору в другом виде");
+            Check(s.Queue[0].Id == "char_papa_stand", "разделы снова с начала");
+            RealClick(bySection);
+            Check(!s.Levels, "клик по текущему виду ничего не меняет");
+            form.Close();
+            Pump(30);
+        }
+
         static Session Dasha(string root)
         {
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(root), "jobs.json"),
@@ -1938,6 +2052,9 @@ if ($Mode -eq 'hang')");
             WaitImages(form);
             Pump(150);
             Save(form, Path.Combine(outDir, "dlg_main.png"));
+            Key(form, Keys.L);
+            Pump(300);
+            Save(form, Path.Combine(outDir, "dlg_levels.png"));
             form.ShowPanel();
             Pump(400);
             Save(Application.OpenForms.OfType<ControlForm>().Single(), Path.Combine(outDir, "dlg_panel.png"));
@@ -1991,6 +2108,7 @@ if ($Mode -eq 'hang')");
                     Say("--- папки и разделы");
                     TestRoots();
                     TestSections();
+                    TestLevels();
                     Say("--- обзор выбранного");
                     TestReview();
                     Say("--- задачи и обновление");
@@ -2014,6 +2132,8 @@ if ($Mode -eq 'hang')");
                     TestReviewUi();
                     Say("--- пульт");
                     TestPanelUi();
+                    Say("--- вид по уровням");
+                    TestLevelsUi();
                     Say("--- окно");
                     TestUi();
                     Say("--- окно и отправка");

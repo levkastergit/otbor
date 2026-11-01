@@ -75,6 +75,7 @@ namespace Otbor
     public class SectionFile
     {
         public List<SectionEntry> sections;
+        public List<SectionEntry> levels;
     }
 
     public class SectionEntry
@@ -101,31 +102,47 @@ namespace Otbor
     {
         public static readonly Section Other = new Section { Kind = "Прочее", Name = "Без раздела", Index = int.MaxValue };
 
-        static readonly Dictionary<string, Placement> places = Load();
+        static readonly SectionFile file = Read();
+        static readonly Dictionary<string, Placement> places = Places(file.sections);
+        static readonly Dictionary<string, Placement> levels = Places(file.levels);
 
-        static Dictionary<string, Placement> Load()
+        static SectionFile Read()
         {
-            var map = new Dictionary<string, Placement>(StringComparer.OrdinalIgnoreCase);
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("sections.json"))
             using (var reader = new StreamReader(stream, Encoding.UTF8))
+                return new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Deserialize<SectionFile>(reader.ReadToEnd());
+        }
+
+        static Dictionary<string, Placement> Places(List<SectionEntry> entries)
+        {
+            var map = new Dictionary<string, Placement>(StringComparer.OrdinalIgnoreCase);
+            int index = 0;
+            foreach (SectionEntry entry in entries)
             {
-                var file = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Deserialize<SectionFile>(reader.ReadToEnd());
-                int index = 0;
-                foreach (SectionEntry entry in file.sections)
-                {
-                    var section = new Section { Kind = entry.kind, Name = entry.name, Index = index++ };
-                    int order = 0;
-                    foreach (SectionJob job in entry.jobs)
-                        map[job.id] = new Placement { Section = section, Order = order++, Goes = job.goes };
-                }
+                var section = new Section { Kind = entry.kind, Name = entry.name, Index = index++ };
+                int order = 0;
+                foreach (SectionJob job in entry.jobs)
+                    map[job.id] = new Placement { Section = section, Order = order++, Goes = job.goes };
             }
             return map;
         }
 
-        public static Placement Of(string id)
+        static Placement Find(Dictionary<string, Placement> map, string id)
         {
             Placement place;
-            return places.TryGetValue(id, out place) ? place : new Placement();
+            return map.TryGetValue(id, out place) ? place : new Placement();
+        }
+
+        public static Placement Of(string id)
+        {
+            return Find(places, id);
+        }
+
+        // В файле у уровней нет строки «Куда идёт»: она общая для обоих видов.
+        public static Placement Level(string id)
+        {
+            Placement place = Find(levels, id);
+            return new Placement { Section = place.Section, Order = place.Order, Goes = Of(id).Goes };
         }
     }
 
@@ -230,6 +247,7 @@ namespace Otbor
         public const string TrashDir = "_Ненужные";
         public const string JournalFile = "_отбор.json";
         public const string StatusFile = "_статус.json";
+        public const string ViewFile = "_вид.txt";
         public const string ChoiceFile = "выбор.csv";
         public const string RegenFile = "перегенерировать.txt";
 
@@ -258,6 +276,7 @@ namespace Otbor
         public readonly List<Job> Queue = new List<Job>();
         public List<Decision> Done = new List<Decision>();
         public string Warning;
+        public bool Levels { get; private set; }
 
         readonly Dictionary<string, Info> info = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
         readonly JavaScriptSerializer json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
@@ -268,6 +287,7 @@ namespace Otbor
             // Обучающие наборы в datasets и refs выглядят как задания, и отбор разнёс бы их по папкам.
             if (IsKit(Root)) throw new InvalidOperationException("Это папка FluxKit, а варианты лежат в её подпапке results.");
             LoadInfo();
+            Levels = File.Exists(Abs(ViewFile)) && File.ReadAllText(Abs(ViewFile)).Trim() == "levels";
             string journal = Abs(JournalFile);
             if (File.Exists(journal))
                 Done = json.Deserialize<List<Decision>>(File.ReadAllText(journal, Encoding.UTF8)) ?? new List<Decision>();
@@ -416,7 +436,7 @@ namespace Otbor
 
         Job BuildJob(string group, string id)
         {
-            Placement place = SectionMap.Of(id);
+            Placement place = Place(id);
             var job = new Job { Group = group, Id = id, Section = place.Section, SectionOrder = place.Order, Goes = place.Goes };
             Info i;
             if (info.TryGetValue(id, out i))
@@ -552,6 +572,30 @@ namespace Otbor
             return true;
         }
 
+        public Placement Place(string id)
+        {
+            return Levels ? SectionMap.Level(id) : SectionMap.Of(id);
+        }
+
+        // Очередь начинается заново с первого неразобранного: при смене вида важен порядок, а не текущее задание.
+        public void SetLevels(bool on)
+        {
+            Levels = on;
+            foreach (Job job in Queue)
+            {
+                Placement place = Place(job.Id);
+                job.Section = place.Section;
+                job.SectionOrder = place.Order;
+            }
+            Queue.Sort(CompareJobs);
+            try
+            {
+                File.WriteAllText(Abs(ViewFile), on ? "levels" : "sections");
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
         void Rotate(int first)
         {
             List<Job> before = Queue.GetRange(0, first);
@@ -573,7 +617,7 @@ namespace Otbor
         public List<ReviewItem> Review(Section section)
         {
             var items = new List<ReviewItem>();
-            foreach (Decision d in Ordered().Where(x => SectionMap.Of(x.Id).Section == section))
+            foreach (Decision d in Ordered(Place).Where(x => Place(x.Id).Section == section))
             {
                 Info i;
                 info.TryGetValue(d.Id, out i);
@@ -610,7 +654,7 @@ namespace Otbor
                 row.Left++;
             }
             foreach (Decision d in Latest())
-                if (!waiting.Contains(d.Group + "/" + d.Id)) stat(SectionMap.Of(d.Id).Section).Total++;
+                if (!waiting.Contains(d.Group + "/" + d.Id)) stat(Place(d.Id).Section).Total++;
             return stats.Values.OrderBy(s => s.Section.Index).ToList();
         }
 
@@ -695,17 +739,18 @@ namespace Otbor
         {
             try
             {
-                List<Decision> ordered = Ordered();
+                List<Decision> ordered = Ordered(SectionMap.Of);
 
-                var choice = new StringBuilder("Раздел;Что это;Куда идёт;Ассет;Группа;Задание;Выбранные варианты\r\n");
+                var choice = new StringBuilder("Раздел;Уровень;Что это;Куда идёт;Ассет;Группа;Задание;Выбранные варианты\r\n");
                 foreach (Decision d in ordered.Where(x => !x.None))
                 {
                     Info i;
                     info.TryGetValue(d.Id, out i);
                     Placement place = SectionMap.Of(d.Id);
+                    Section level = SectionMap.Level(d.Id).Section;
                     choice.Append(string.Join(";", new[]
                     {
-                        Csv(place.Section.Kind + ": " + place.Section.Name), Csv(i != null ? i.Ru : ""),
+                        Csv(place.Section.Kind + ": " + place.Section.Name), Csv(level.Kind + ": " + level.Name), Csv(i != null ? i.Ru : ""),
                         Csv(place.Goes ?? (i != null ? i.Where : "")), Csv(i != null ? i.Asset : ""),
                         Csv(d.Group), Csv(d.Id), Csv(string.Join(", ", d.Picked))
                     })).Append("\r\n");
@@ -733,12 +778,12 @@ namespace Otbor
             }
         }
 
-        List<Decision> Ordered()
+        List<Decision> Ordered(Func<string, Placement> place)
         {
             Comparer<string> logical = Comparer<string>.Create(StrCmpLogicalW);
             return Latest()
-                .OrderBy(d => SectionMap.Of(d.Id).Section.Index)
-                .ThenBy(d => SectionMap.Of(d.Id).Order)
+                .OrderBy(d => place(d.Id).Section.Index)
+                .ThenBy(d => place(d.Id).Order)
                 .ThenBy(d => d.Group, logical)
                 .ThenBy(d => OrderOf(d.Id))
                 .ThenBy(d => d.Id, logical)
