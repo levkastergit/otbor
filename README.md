@@ -20,6 +20,8 @@ curl.exe -fsSLo UPDATE.bat https://raw.githubusercontent.com/levkastergit/otbor/
 `scripts\generate.py` и `scripts\generate.ps1` и добавляет `5_REGEN.bat`. Позже обновления ставятся тем же
 `UPDATE.bat`. Перед обновлением закройте `Otbor.exe`.
 
+Готовая программа отдельным файлом лежит на странице [Releases](https://github.com/levkastergit/otbor/releases/latest).
+
 ## Работа
 
 1. Запустите `results\Otbor.exe` или копию в корне FluxKit: обе открывают папку `results`. При первом запуске
@@ -115,3 +117,14 @@ build.bat
 
 Скрипт останавливается, если задание не нашло раздел. Комнаты и уровни взяты из `GameDesign.md` §4.2 и §12.1; предмет
 попадает в локацию своей первой сцены из `SearchLists.csv`.
+
+## Новая версия
+
+Соберите `Otbor.exe`, обновите `RELEASE_NOTES.md`, отправьте изменения в `main`, затем отправьте тег версии:
+
+```bat
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+GitHub Actions создаст релиз с `Otbor.exe` и `UPDATE.bat` из этого тега.
