@@ -104,6 +104,15 @@ def main():
     run('--stage', 'sketch')
     sk = os.path.join(kit, 'results', '90_scenes', 'scene_p0_reception', 'scene_p0_reception__sketch.png')
     check(os.path.isfile(sk) and Image.open(sk).size == (1472, 1024), 'эскиз 1472x1024')
+    # персонаж в эскиз не рисуется: над столом, где была бы голова Тамары, эскиз совпадает с фоном
+    groups = {j['id']: j['group'] for j in g.load_jobs(kit)['jobs']}
+    bg = Image.open(scene.picked(os.path.join(kit, 'results'), groups, spec['background'])).convert('RGB')
+    for c in spec['characters']:
+        x, y, w, h = c['rect']
+        head = (int(x + w * 0.3), int(y + 5), int(x + w * 0.7), int(y + h * 0.35))
+        diff = np.abs(np.asarray(Image.open(sk).crop(head)).astype(int) - np.asarray(bg.crop(head)).astype(int)).max()
+        check(diff == 0, f'персонаж {c["job"]} не нарисован в эскизе (отличие от фона {diff})')
+    check(all('dec_rec_desk' in c['behind'] for c in spec['characters']), 'стол отмечен как мебель перед Тамарой')
 
     # 2. items до отбора сцены — понятный отказ
     try:

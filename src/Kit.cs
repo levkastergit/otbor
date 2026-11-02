@@ -149,7 +149,7 @@ namespace Otbor
     // Обновление из релиза GitHub: программа и файлы кита берутся из одного тега, поэтому они всегда подходят друг другу.
     public static class KitUpdate
     {
-        public const string Current = "1.5.0";
+        public const string Current = "1.5.1";
 
         public static string ApiUrl = "https://api.github.com/repos/" + GitHubSync.Repo + "/releases/latest";
         public static string AssetUrl = "https://github.com/" + GitHubSync.Repo + "/releases/download/";

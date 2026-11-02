@@ -1,5 +1,5 @@
 {
- "_doc": "Сцена поиска П0/1, приёмная клиники. Строится из X:/PDGame/Tools/layouts/P0_Reception.json. rect = x, y, ширина, высота в пикселях фона 1472x1024. Шаги: 6_SCENE.bat, отбор, 7_SCENE_ITEMS.bat, отбор.",
+ "_doc": "Сцена поиска П0/1, приёмная клиники. Строится из X:/PDGame/Tools/layouts/P0_Reception.json. rect = x, y, ширина, высота в пикселях фона 1472x1024. Шаги: 6_SCENE.bat, отбор, 7_SCENE_ITEMS.bat, отбор. characters — персонажи: в картину не рисуются, в игре это отдельные актёры (анимация), behind — мебель перед персонажем: в игре её часть вырезается из картины и рисуется поверх него.",
  "id": "p0_reception",
  "title": "П0, сцена 1: приёмная клиники, 19:10",
  "size": [
@@ -7,7 +7,7 @@
   1024
  ],
  "background": "bg_p0_reception",
- "scene_prompt": "reception room of a private clinic in the evening. Redraw the reference picture as one finished hand-drawn cartoon illustration in a single consistent style. Keep the camera, the walls, the window with the evening sky, the white door and the blue rug exactly as they are, and keep every piece of furniture and the woman behind the desk at exactly the same place, size and shape. Unify the line thickness, colours and shading of everything, light the whole room with the warm light of the ceiling lamp and add soft contact shadows under the furniture on the floor. Also add a tall wooden coat rack with curved hooks to the left of the door, a small framed landscape painting on the right wall above the blue office chair, and a small wooden wall shelf with carved brackets on the left wall between the window and the corner. The woman at the desk is Tamara: middle-aged, short brown hair, red jacket with a blue flower brooch, white blouse. No small loose objects on the desk, floor or windowsill. No text, no letters.",
+ "scene_prompt": "reception room of a private clinic in the evening. Redraw the reference picture as one finished hand-drawn cartoon illustration in a single consistent style. Keep the camera, the walls, the window with the evening sky, the white door and the blue rug exactly as they are, and keep every piece of furniture at exactly the same place, size and shape. Unify the line thickness, colours and shading of everything, light the whole room with the warm light of the ceiling lamp and add soft contact shadows under the furniture on the floor. Also add a tall wooden coat rack with curved hooks to the left of the door, a small framed landscape painting on the right wall above the blue office chair, and a small wooden wall shelf with carved brackets on the left wall between the window and the corner. Nobody is in the room: no people, the space behind the desk is empty. No small loose objects on the desk, floor or windowsill. No text, no letters.",
  "sketch": [
   {
    "job": "dec_rec_wallclock",
@@ -16,15 +16,6 @@
     150,
     89.6,
     91.1
-   ]
-  },
-  {
-   "job": "char_tamara_desk",
-   "rect": [
-    689,
-    212,
-    192.1,
-    266.2
    ]
   },
   {
@@ -52,6 +43,21 @@
     625,
     252.9,
     275.4
+   ]
+  }
+ ],
+ "characters": [
+  {
+   "id": "p0rec_tamara_desk",
+   "job": "char_tamara_desk",
+   "rect": [
+    689,
+    212,
+    192.1,
+    266.2
+   ],
+   "behind": [
+    "dec_rec_desk"
    ]
   }
  ],
