@@ -4,3 +4,8 @@ kit/train.ps1	scripts\train.ps1
 kit/retrain.py	scripts\retrain.py
 kit/5_REGEN.bat	5_REGEN.bat
 kit/UPDATE.bat	UPDATE.bat
+kit/scene.py	scripts\scene.py
+kit/scene.ps1	scripts\scene.ps1
+kit/6_SCENE.bat	6_SCENE.bat
+kit/7_SCENE_ITEMS.bat	7_SCENE_ITEMS.bat
+kit/scenes/p0_reception.json	scenes\p0_reception.json
