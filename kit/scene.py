@@ -200,11 +200,14 @@ def extract_layer(base_crop, result, place_mask, size):
     return Image.fromarray(layer, 'RGBA'), Image.fromarray(r.astype(np.uint8), 'RGB')
 
 
-def item_prompt(spec, e, has_sprite, trigger):
+def item_prompt(spec, e, has_sprite, trigger, small=False):
     style = (f'{trigger}, ' if trigger else '') + 'a crop of a hand-drawn cartoon illustration of a room. '
     tail = (' Draw it with the same line thickness, colours and shading as the room around it, lit by the warm '
             'evening light of the ceiling lamp, with a soft contact shadow where it touches the surface. '
             'Do not change anything else in the picture. No text, no letters.')
+    if small:
+        tail += (' The object is small, but draw it sharp and clearly readable, with a thin dark outline '
+                 'and recognisable details — not a blurry spot or a plain blob.')
     if has_sprite:
         return (style + f'In the middle, {e["where"]}, there is {e["desc"]} pasted on top of the picture. '
                 'Redraw only this object so that it belongs to the illustration. Keep its shape, size, colours and '
@@ -287,7 +290,12 @@ def run_insert(gen, base, rect, sprite, prompt, seed, job, name, d, meta, size_h
     crop = base.crop((x0, y0, x1, y1))
     ref, place = guide(crop, (x0, y0), rect, sprite, fill)
     t0 = time.time()
-    result = gen.run(prompt, crop.size, seed, [ref])
+    # мелкий предмет теряется в куске: генерируем кусок в двойном разрешении, слой потом сожмётся обратно
+    gen_size = crop.size
+    if size_hint < 64 and max(crop.size) <= 512:
+        gen_size = (crop.size[0] * 2, crop.size[1] * 2)
+        ref = ref.resize(gen_size, Image.LANCZOS)
+    result = gen.run(prompt, gen_size, seed, [ref])
     layer, fixed = extract_layer(crop, result, place, size_hint)
     save_variant(d, name, fixed, layer, meta, {'prompt': prompt, 'seed': seed, 'crop': [x0, y0, x1, y1],
                                                'rect': rect, 'guide': 'sprite' if sprite is not None else 'shape'})
@@ -337,7 +345,7 @@ def stage_items(kit, gen, spec, groups, loras, triggers, variants, force, only):
             continue
         sp = picked(results, groups, e['job'])
         sprite = trim_alpha(Image.open(sp)) if sp else None
-        prompt = item_prompt(spec, e, sprite is not None, '')
+        prompt = item_prompt(spec, e, sprite is not None, '', small=max(e['rect'][2], e['rect'][3]) < 64)
         for k in range(variants):
             name = f"{e['id']}__edit_{k + 1}"
             if (os.path.isfile(os.path.join(d, name + '.png')) or g.is_sorted(results, job, name)) and not force:
