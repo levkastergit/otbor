@@ -1,5 +1,5 @@
 {
- "summary": {"ready":193,"regen":29,"left":466},
+ "summary": {"ready":193,"regen":29,"left":489},
  "jobs": [
   {"id":"ui_panel_bottom","group":"10_ui_search","ru":"Нижняя панель экрана поиска (ПРОБА СТИЛЯ UI)","state":"ready","picked":["ui_panel_bottom__ref_3"],"tried":["ui_panel_bottom__ref_1","ui_panel_bottom__ref_2","ui_panel_bottom__ref_3","ui_panel_bottom__ref_4"],"note":null,"at":"2026-11-01 15:51:12","pc":"87da46b4"},
   {"id":"ui_panel_tasklist","group":"10_ui_search","ru":"Вертикальная панель списка задач","state":"ready","picked":["ui_panel_tasklist__ref_3"],"tried":["ui_panel_tasklist__ref_1","ui_panel_tasklist__ref_2","ui_panel_tasklist__ref_3","ui_panel_tasklist__ref_4"],"note":null,"at":"2026-11-01 15:51:20","pc":"87da46b4"},
