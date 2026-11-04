@@ -87,8 +87,8 @@ def contact_shadow(canvas, rect):
     cx, cy = x + w / 2, y + h
     layer = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
     ImageDraw.Draw(layer).ellipse((cx - sh_w / 2, cy - sh_h / 2, cx + sh_w / 2, cy + sh_h / 2),
-                                  fill=(20, 12, 8, 110))
-    canvas.alpha_composite(layer.filter(ImageFilter.GaussianBlur(6)))
+                                  fill=(20, 12, 8, 70))
+    canvas.alpha_composite(layer.filter(ImageFilter.GaussianBlur(10)))
 
 
 def sketch(kit, spec, groups):
@@ -111,7 +111,10 @@ def sketch(kit, spec, groups):
             contact_shadow(canvas, e['rect'])
         if block:
             x, y, w, h = e['rect']
-            ImageDraw.Draw(canvas).rounded_rectangle((x, y, x + w, y + h), 10, fill=PLACEHOLDER)
+            if e.get('shape') == 'ellipse':
+                ImageDraw.Draw(canvas).ellipse((x, y, x + w, y + h), fill=PLACEHOLDER)
+            else:
+                ImageDraw.Draw(canvas).rounded_rectangle((x, y, x + w, y + h), 10, fill=PLACEHOLDER)
         else:
             spr, pos = fit(trim_alpha(Image.open(p)), e['rect'])
             canvas.alpha_composite(spr, pos)
