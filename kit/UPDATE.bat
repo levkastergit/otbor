@@ -22,6 +22,8 @@ call :get kit/scene.ps1 scripts\scene.ps1 || goto fail
 call :get kit/6_SCENE.bat 6_SCENE.bat || goto fail
 call :get kit/7_SCENE_ITEMS.bat 7_SCENE_ITEMS.bat || goto fail
 call :get kit/scenes/p0_reception.json scenes\p0_reception.json || goto fail
+call :get kit/jobs.json jobs.json || goto fail
+call :get kit/8_REF3D.bat 8_REF3D.bat || goto fail
 echo.
 echo DONE. Run results\Otbor.exe
 pause

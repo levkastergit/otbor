@@ -59,6 +59,14 @@
 {
 "id": "port_papa_worry",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_papa_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_papa_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -101,6 +109,14 @@
 {
 "id": "port_masha",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_masha_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_masha_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -139,6 +155,14 @@
 {
 "id": "port_dasha",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_dasha_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_dasha_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -177,6 +201,14 @@
 {
 "id": "port_zhenya",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_zhenya_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_zhenya_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -211,6 +243,14 @@
 {
 "id": "port_gs",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_gs_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_gs_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -233,6 +273,14 @@
 {
 "id": "port_pugovka",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_pugovka_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_pugovka_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -251,6 +299,14 @@
 {
 "id": "port_tamara_smile",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_tamara_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_tamara_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -273,6 +329,14 @@
 {
 "id": "port_babushka",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_babushka_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_babushka_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -283,6 +347,14 @@
 {
 "id": "port_misha",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_misha_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_misha_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -297,6 +369,14 @@
 {
 "id": "port_fizruk",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_fizruk_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_fizruk_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -315,6 +395,14 @@
 {
 "id": "port_uchilka",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_uchilka_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_uchilka_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -329,6 +417,14 @@
 {
 "id": "port_kassir",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_kassir_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_kassir_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -339,6 +435,14 @@
 {
 "id": "port_posetitel",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_posetitel_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_posetitel_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -353,6 +457,14 @@
 {
 "id": "port_polezhaikin",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_polezhaikin_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_polezhaikin_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -367,6 +479,14 @@
 {
 "id": "port_pauk",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_pauk_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_pauk_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -381,6 +501,14 @@
 {
 "id": "port_petya",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_petya_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_petya_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -395,6 +523,14 @@
 {
 "id": "port_antonov",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_antonov_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_antonov_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -409,6 +545,14 @@
 {
 "id": "port_dedushka",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_dedushka_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_dedushka_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -423,6 +567,14 @@
 {
 "id": "port_monter",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_monter_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_monter_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -437,6 +589,14 @@
 {
 "id": "port_admin",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_admin_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_admin_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -455,6 +615,14 @@
 {
 "id": "port_izdatel",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_izdatel_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_izdatel_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -469,6 +637,14 @@
 {
 "id": "port_sosed",
 "goes": "Портрет говорящего в окне сценок"
+},
+{
+"id": "ref3d_sosed_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_sosed_turn",
+"goes": "Базовый референс для 3D-модели"
 }
 ]
 },
@@ -3207,6 +3383,48 @@
 },
 {
 "id": "port_pugovka"
+},
+{
+"id": "ref3d_papa_apose"
+},
+{
+"id": "ref3d_papa_turn"
+},
+{
+"id": "ref3d_masha_apose"
+},
+{
+"id": "ref3d_masha_turn"
+},
+{
+"id": "ref3d_dasha_apose"
+},
+{
+"id": "ref3d_dasha_turn"
+},
+{
+"id": "ref3d_zhenya_apose"
+},
+{
+"id": "ref3d_zhenya_turn"
+},
+{
+"id": "ref3d_gs_apose"
+},
+{
+"id": "ref3d_gs_turn"
+},
+{
+"id": "ref3d_pugovka_apose"
+},
+{
+"id": "ref3d_pugovka_turn"
+},
+{
+"id": "ref3d_tamara_apose"
+},
+{
+"id": "ref3d_tamara_turn"
 }
 ]
 },
@@ -3750,6 +3968,12 @@
 "jobs": [
 {
 "id": "port_misha"
+},
+{
+"id": "ref3d_misha_apose"
+},
+{
+"id": "ref3d_misha_turn"
 }
 ]
 },
@@ -3879,6 +4103,12 @@
 },
 {
 "id": "port_babushka"
+},
+{
+"id": "ref3d_babushka_apose"
+},
+{
+"id": "ref3d_babushka_turn"
 }
 ]
 },
@@ -4008,6 +4238,12 @@
 },
 {
 "id": "port_fizruk"
+},
+{
+"id": "ref3d_fizruk_apose"
+},
+{
+"id": "ref3d_fizruk_turn"
 }
 ]
 },
@@ -4377,6 +4613,18 @@
 },
 {
 "id": "port_polezhaikin"
+},
+{
+"id": "ref3d_polezhaikin_apose"
+},
+{
+"id": "ref3d_polezhaikin_turn"
+},
+{
+"id": "ref3d_uchilka_apose"
+},
+{
+"id": "ref3d_uchilka_turn"
 }
 ]
 },
@@ -4545,6 +4793,18 @@
 },
 {
 "id": "port_kassir"
+},
+{
+"id": "ref3d_posetitel_apose"
+},
+{
+"id": "ref3d_posetitel_turn"
+},
+{
+"id": "ref3d_kassir_apose"
+},
+{
+"id": "ref3d_kassir_turn"
 }
 ]
 },
@@ -4791,6 +5051,18 @@
 },
 {
 "id": "port_petya"
+},
+{
+"id": "ref3d_petya_apose"
+},
+{
+"id": "ref3d_petya_turn"
+},
+{
+"id": "ref3d_pauk_apose"
+},
+{
+"id": "ref3d_pauk_turn"
 }
 ]
 },
@@ -4875,6 +5147,12 @@
 },
 {
 "id": "port_antonov"
+},
+{
+"id": "ref3d_antonov_apose"
+},
+{
+"id": "ref3d_antonov_turn"
 }
 ]
 },
@@ -5019,6 +5297,18 @@
 },
 {
 "id": "port_dedushka"
+},
+{
+"id": "ref3d_dedushka_apose"
+},
+{
+"id": "ref3d_dedushka_turn"
+},
+{
+"id": "ref3d_monter_apose"
+},
+{
+"id": "ref3d_monter_turn"
 }
 ]
 },
@@ -5127,6 +5417,18 @@
 },
 {
 "id": "port_izdatel"
+},
+{
+"id": "ref3d_admin_apose"
+},
+{
+"id": "ref3d_admin_turn"
+},
+{
+"id": "ref3d_izdatel_apose"
+},
+{
+"id": "ref3d_izdatel_turn"
 }
 ]
 },
@@ -5484,6 +5786,12 @@
 },
 {
 "id": "port_sosed"
+},
+{
+"id": "ref3d_sosed_apose"
+},
+{
+"id": "ref3d_sosed_turn"
 }
 ]
 },

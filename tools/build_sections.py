@@ -111,7 +111,7 @@ MINIGAMES = [
 PEOPLE = [
     ('Папа', r'^(char_papa_|port_papa_|papa_)'), ('Маша', r'(^|_)(masha|mas)(_|$)'), ('Даша', r'(^|_)(dasha|das)(_|$)'),
     ('Женя', r'(^|_)(zhenya|zhe)(_|$)'), ('Галина Сергеевна', r'(^|_)gs(_|$)'), ('Пуговка', r'(^|_)(pugovka|pug)(_|$)'),
-    ('Тамара (приёмная)', r'tamara'), ('Бабушка', r'babushka'), ('Миша', r'port_misha'),
+    ('Тамара (приёмная)', r'tamara'), ('Бабушка', r'babushka'), ('Миша', r'(^|_)misha(_|$)'),
     ('Физрук', r'fizruk'), ('Т. Ивановна (учительница)', r'uchilka'), ('Кассир кафе', r'kassir'),
     ('Посетитель кафе', r'posetitel'), ('Полежайкин', r'polezhaikin'), ('Паук', r'pauk'), ('Петя', r'petya'),
     ('Антонов', r'antonov'), ('Дедушка', r'dedushka'), ('Монтёр', r'monter'), ('Администратор гостиницы', r'admin'),
@@ -259,6 +259,12 @@ def character_use(job):
 def classify(job, used):
     """Возвращает (вид, раздел, вес внутри раздела, куда идёт)."""
     i, group = job['id'], job['group']
+    if group == '87_ref3d':  # базовые референсы для 3D-моделей: ref3d_<персонаж>_<apose|turn>
+        short = i[len('ref3d_'):]
+        for name, pattern in PEOPLE:
+            if re.search(pattern, short):
+                return 'Персонажи', name, 2, 'Базовый референс для 3D-модели'
+        sys.exit(f'{i}: не определён персонаж 3D-референса')
     if group in CHARACTER_GROUPS:
         for name, pattern in PEOPLE:
             if re.search(pattern, i):
@@ -306,6 +312,8 @@ def level_title(code):
 
 
 def character_level(job, name, use):
+    if use == 'Базовый референс для 3D-модели':
+        return FIRST_APPEARANCE[name]
     if job['id'].startswith('hub_'):
         return 'HUB'
     if use == 'Семейный совет и хаб':
