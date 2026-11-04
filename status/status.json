@@ -1,5 +1,5 @@
 {
- "summary": {"ready":192,"regen":29,"left":467},
+ "summary": {"ready":193,"regen":29,"left":466},
  "jobs": [
   {"id":"ui_panel_bottom","group":"10_ui_search","ru":"Нижняя панель экрана поиска (ПРОБА СТИЛЯ UI)","state":"ready","picked":["ui_panel_bottom__ref_3"],"tried":["ui_panel_bottom__ref_1","ui_panel_bottom__ref_2","ui_panel_bottom__ref_3","ui_panel_bottom__ref_4"],"note":null,"at":"2026-11-01 15:51:12","pc":"87da46b4"},
   {"id":"ui_panel_tasklist","group":"10_ui_search","ru":"Вертикальная панель списка задач","state":"ready","picked":["ui_panel_tasklist__ref_3"],"tried":["ui_panel_tasklist__ref_1","ui_panel_tasklist__ref_2","ui_panel_tasklist__ref_3","ui_panel_tasklist__ref_4"],"note":null,"at":"2026-11-01 15:51:20","pc":"87da46b4"},
@@ -221,6 +221,7 @@
   {"id":"mg_ward_socks","group":"85_mg","ru":"Шкаф: носки","state":"regen","picked":[],"tried":["mg_ward_socks__t2i_1","mg_ward_socks__t2i_2","mg_ward_socks__t2i_3","mg_ward_socks__t2i_4"],"note":"не тот стиль","at":"2026-11-01 18:02:51","pc":"87da46b4"},
   {"id":"mg_ward_sweater","group":"85_mg","ru":"Шкаф: свитер","state":"regen","picked":[],"tried":["mg_ward_sweater__t2i_1","mg_ward_sweater__t2i_2","mg_ward_sweater__t2i_3","mg_ward_sweater__t2i_4"],"note":"не тот стиль","at":"2026-11-01 18:02:36","pc":"87da46b4"},
   {"id":"mg_ward_towels","group":"85_mg","ru":"Шкаф: полотенца","state":"regen","picked":[],"tried":["mg_ward_towels__t2i_1","mg_ward_towels__t2i_2","mg_ward_towels__t2i_3","mg_ward_towels__t2i_4"],"note":"не тот стиль","at":"2026-11-01 18:02:49","pc":"87da46b4"},
-  {"id":"ui_codelock_ball","group":"85_mg","ru":"Символ «мяч» для кодового замка, в стиле T_MG_Code_*","state":"ready","picked":["ui_codelock_ball__t2i_1"],"tried":["ui_codelock_ball__t2i_1","ui_codelock_ball__t2i_2","ui_codelock_ball__t2i_3","ui_codelock_ball__t2i_4"],"note":null,"at":"2026-11-01 17:51:36","pc":"87da46b4"}
+  {"id":"ui_codelock_ball","group":"85_mg","ru":"Символ «мяч» для кодового замка, в стиле T_MG_Code_*","state":"ready","picked":["ui_codelock_ball__t2i_1"],"tried":["ui_codelock_ball__t2i_1","ui_codelock_ball__t2i_2","ui_codelock_ball__t2i_3","ui_codelock_ball__t2i_4"],"note":null,"at":"2026-11-01 17:51:36","pc":"87da46b4"},
+  {"id":"scene_p0_reception","group":"90_scenes","ru":null,"state":"ready","picked":["scene_p0_reception__bg_1"],"tried":["scene_p0_reception__bg_1"],"note":null,"at":"2026-11-04 14:51:21","pc":"87da46b4"}
  ]
 }
