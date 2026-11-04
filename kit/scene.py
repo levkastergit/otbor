@@ -96,7 +96,9 @@ def sketch(kit, spec, groups):
     bg_path = picked(results, groups, spec['background'])
     if not bg_path:
         sys.exit(f'Нет отобранного фона {spec["background"]} в results\\_Нужные — сначала отберите его в Otbor.exe.')
-    canvas = Image.open(bg_path).convert('RGBA').resize(tuple(spec['size']), Image.LANCZOS)
+    bg = Image.open(bg_path).convert('RGBA')
+    bg = bg.crop((6, 6, bg.width - 6, bg.height - 6))   # тёмные полосы-артефакты по краям генерации
+    canvas = bg.resize(tuple(spec['size']), Image.LANCZOS)
     missing = []
     for e in list(spec['sketch']) + list(spec.get('openers', [])):
         job = e.get('job') or e['closed']
