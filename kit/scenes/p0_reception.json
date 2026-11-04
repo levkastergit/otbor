@@ -112,7 +112,13 @@
    ],
    "desc_open": "a small wooden bedside cabinet with its door wide open and an empty shelf inside, the same cabinet that stands closed at this spot in the picture, in the same perspective and wood colour as the rooms furniture",
    "floor": true,
-   "placeholder": true
+   "placeholder": true,
+   "open_rect": [
+    120,
+    565,
+    355,
+    230
+   ]
   }
  ],
  "items": [

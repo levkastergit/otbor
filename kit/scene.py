@@ -147,8 +147,9 @@ def open_rect(closed_img, open_img, rect):
     return [bx - w / 2, by - h, w, h]
 
 
-def guide(base_crop, origin, rect, sprite):
-    """Кусок с положенным в своё место предметом и маска этого места (координаты куска)."""
+def guide(base_crop, origin, rect, sprite, fill=True):
+    """Кусок с положенным в своё место предметом и маска этого места (координаты куска).
+    fill=False: кусок не меняется, маска = рект (модель правит нарисованное по инструкции промпта)."""
     x, y, w, h = rect
     lx, ly = x - origin[0], y - origin[1]
     img = base_crop.convert('RGBA')
@@ -157,10 +158,12 @@ def guide(base_crop, origin, rect, sprite):
         spr, _ = fit(sprite, rect)
         img.alpha_composite(spr, (round(lx), round(ly)))
         mask.paste(spr.getchannel('A').point(lambda v: 255 if v >= 128 else 0), (round(lx), round(ly)))
-    else:
+    elif fill:
         r = max(2, int(min(w, h) * 0.2))
         ImageDraw.Draw(img).rounded_rectangle((lx, ly, lx + w, ly + h), r, fill=PLACEHOLDER)
         ImageDraw.Draw(mask).rounded_rectangle((lx, ly, lx + w, ly + h), r, fill=255)
+    else:
+        ImageDraw.Draw(mask).rectangle((lx, ly, lx + w, ly + h), fill=255)
     return img.convert('RGB'), np.asarray(mask) > 0
 
 
@@ -218,6 +221,15 @@ def opener_prompt(spec, o, trigger):
             'Do not change anything else in the picture. No text, no letters.')
 
 
+def opener_edit_prompt(o):
+    """Открыватель без спрайта-гайда: модель открывает нарисованный в картине предмет по инструкции."""
+    return ('a crop of a hand-drawn cartoon illustration of a room. In the middle of the crop stands a closed '
+            f'wooden cabinet. Redraw it as {o["desc_open"]}: its door is swung open flat to the side on its hinges, '
+            'inside there is an empty shelf. Keep the cabinet exactly at the same place and size, with the same '
+            'top, wood colour, line thickness and perspective; the lighting stays the warm lamp light of the room. '
+            'Do not change anything else in the picture. No text, no letters.')
+
+
 # ---------------------------------------------------------------- шаги
 
 def save_variant(d, name, raw_img, layer, meta, info):
@@ -270,10 +282,10 @@ def picked_scene(results, spec):
     return Image.open(os.path.join(d, names[0])).convert('RGB').resize(tuple(spec['size']), Image.LANCZOS)
 
 
-def run_insert(gen, base, rect, sprite, prompt, seed, job, name, d, meta, size_hint):
+def run_insert(gen, base, rect, sprite, prompt, seed, job, name, d, meta, size_hint, fill=True):
     x0, y0, x1, y1 = crop_box(rect, base.size)
     crop = base.crop((x0, y0, x1, y1))
-    ref, place = guide(crop, (x0, y0), rect, sprite)
+    ref, place = guide(crop, (x0, y0), rect, sprite, fill)
     t0 = time.time()
     result = gen.run(prompt, crop.size, seed, [ref])
     layer, fixed = extract_layer(crop, result, place, size_hint)
@@ -294,19 +306,23 @@ def stage_items(kit, gen, spec, groups, loras, triggers, variants, force, only):
         d = g.job_dir(results, job)
         os.makedirs(d, exist_ok=True)
         meta = load_meta(d)
-        cp, op = picked(results, groups, o['closed']), picked(results, groups, o['open'])
-        if not (cp and op):
-            print(f'!!! {o["id"]}: нет отобранных картинок {o["closed"]} / {o["open"]} — открыватель пропущен')
-            continue
-        closed, open_img = trim_alpha(Image.open(cp)), trim_alpha(Image.open(op))
-        rect = open_rect(closed, open_img, o['rect'])
+        if o.get('placeholder'):
+            # Закрытый предмет нарисован моделью прямо в картине: открываем его инструкцией, без спрайта-гайда.
+            rect, open_img, prompt, fill = o.get('open_rect', o['rect']), None, opener_edit_prompt(o), False
+        else:
+            cp, op = picked(results, groups, o['closed']), picked(results, groups, o['open'])
+            if not (cp and op):
+                print(f'!!! {o["id"]}: нет отобранных картинок {o["closed"]} / {o["open"]} — открыватель пропущен')
+                continue
+            closed, open_img = trim_alpha(Image.open(cp)), trim_alpha(Image.open(op))
+            rect, prompt, fill = open_rect(closed, open_img, o['rect']), opener_prompt(spec, o, ''), True
         if not only or any(o['id'].startswith(s) for s in only):
             for k in range(variants):
                 name = f"{o['id']}__edit_{k + 1}"
                 if (os.path.isfile(os.path.join(d, name + '.png')) or g.is_sorted(results, job, name)) and not force:
                     continue
-                run_insert(gen, scene, rect, open_img, opener_prompt(spec, o, ''), g.job_seed(o['id']) + k,
-                           job, name, d, meta, max(rect[2], rect[3]))
+                run_insert(gen, scene, rect, open_img, prompt, g.job_seed(o['id']) + k,
+                           job, name, d, meta, max(rect[2], rect[3]), fill)
         opened[o['id']] = opened_scene(results, job, scene, d)
     for e in spec['items']:
         if only and not any(e['id'].startswith(s) for s in only):
