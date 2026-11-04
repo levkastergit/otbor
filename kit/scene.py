@@ -24,7 +24,7 @@ import sys
 import time
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 from scipy import ndimage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -80,6 +80,17 @@ def fit(img, rect):
 
 # ---------------------------------------------------------------- эскиз
 
+def contact_shadow(canvas, rect):
+    """Мягкий эллипс-тень у нижнего края ректа: подсказка модели, что предмет стоит на полу."""
+    x, y, w, h = rect
+    sh_w, sh_h = w, max(10.0, h * 0.14)
+    cx, cy = x + w / 2, y + h
+    layer = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).ellipse((cx - sh_w / 2, cy - sh_h / 2, cx + sh_w / 2, cy + sh_h / 2),
+                                  fill=(20, 12, 8, 110))
+    canvas.alpha_composite(layer.filter(ImageFilter.GaussianBlur(6)))
+
+
 def sketch(kit, spec, groups):
     results = os.path.join(kit, 'results')
     bg_path = picked(results, groups, spec['background'])
@@ -92,6 +103,8 @@ def sketch(kit, spec, groups):
         if not p:
             missing.append(e['job'])
             continue
+        if e.get('floor'):
+            contact_shadow(canvas, e['rect'])
         spr, pos = fit(trim_alpha(Image.open(p)), e['rect'])
         canvas.alpha_composite(spr, pos)
     for o in spec.get('openers', []):
@@ -99,6 +112,8 @@ def sketch(kit, spec, groups):
         if not p:
             missing.append(o['closed'])
             continue
+        if o.get('floor'):
+            contact_shadow(canvas, o['rect'])
         spr, pos = fit(trim_alpha(Image.open(p)), o['rect'])
         canvas.alpha_composite(spr, pos)
     if missing:
