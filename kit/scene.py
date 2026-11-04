@@ -98,24 +98,21 @@ def sketch(kit, spec, groups):
         sys.exit(f'Нет отобранного фона {spec["background"]} в results\\_Нужные — сначала отберите его в Otbor.exe.')
     canvas = Image.open(bg_path).convert('RGBA').resize(tuple(spec['size']), Image.LANCZOS)
     missing = []
-    for e in spec['sketch']:
-        p = picked(results, groups, e['job'])
-        if not p:
-            missing.append(e['job'])
+    for e in list(spec['sketch']) + list(spec.get('openers', [])):
+        job = e.get('job') or e['closed']
+        block = e.get('placeholder')   # серый блок вместо спрайта: модель нарисует предмет сама, в перспективе комнаты
+        p = None if block else picked(results, groups, job)
+        if not (p or block):
+            missing.append(job)
             continue
         if e.get('floor'):
             contact_shadow(canvas, e['rect'])
-        spr, pos = fit(trim_alpha(Image.open(p)), e['rect'])
-        canvas.alpha_composite(spr, pos)
-    for o in spec.get('openers', []):
-        p = picked(results, groups, o['closed'])
-        if not p:
-            missing.append(o['closed'])
-            continue
-        if o.get('floor'):
-            contact_shadow(canvas, o['rect'])
-        spr, pos = fit(trim_alpha(Image.open(p)), o['rect'])
-        canvas.alpha_composite(spr, pos)
+        if block:
+            x, y, w, h = e['rect']
+            ImageDraw.Draw(canvas).rounded_rectangle((x, y, x + w, y + h), 10, fill=PLACEHOLDER)
+        else:
+            spr, pos = fit(trim_alpha(Image.open(p)), e['rect'])
+            canvas.alpha_composite(spr, pos)
     if missing:
         print('Нет отобранных картинок (в эскиз не вошли, модель дорисует по тексту):', ', '.join(missing))
     if spec.get('characters'):

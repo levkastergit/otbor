@@ -7,7 +7,7 @@
   1024
  ],
  "background": "bg_p0_reception",
- "scene_prompt": "reception room of a private clinic in the evening. Redraw the reference picture as one finished hand-drawn cartoon illustration in a single consistent style. Keep the camera, the walls, the window with the evening sky, the white door and the blue rug exactly as they are, and keep every piece of furniture at the same place and size. Redraw each piece of furniture in the correct perspective of the room, so that it stands firmly on the floor exactly where its soft ellipse shadow lies in the reference (or hangs flat on the wall), and give it a soft contact shadow. Unify the line thickness, colours and shading of everything and light the whole room with the warm light of the ceiling lamp. Nobody is in the room: no people, the space behind the desk is empty. No small loose objects on the desk, floor or windowsill. No text, no letters.",
+ "scene_prompt": "reception room of a private clinic in the evening. Redraw the reference picture as one finished hand-drawn cartoon illustration in a single consistent style. Keep the camera, the walls, the window with the evening sky, the white door and the blue rug exactly as they are, and keep every piece of furniture at the same place and size. Redraw each piece of furniture in the correct perspective of the two receding walls, so that it stands firmly on the floor exactly where its soft ellipse shadow lies. Replace the plain grey box by the left wall with a small wooden bedside cabinet with one drawer, drawn in the same perspective, standing on the floor. The wall clock, the framed painting and the wooden shelf hang flat on the right wall, foreshortened to match its perspective, never drawn front-on. The only light is the warm ceiling lamp: every piece of furniture casts one soft shadow on the floor, all shadows consistent with that single lamp. Unify the line thickness, colours and shading of everything. Nobody is in the room: no people, the space behind the desk is empty. No small loose objects on the desk, floor or windowsill. No text, no letters.",
  "sketch": [
   {
    "job": "dec_rec_wallclock",
@@ -102,13 +102,14 @@
    "closed": "dec_rec_cabinet_closed",
    "open": "dec_rec_cabinet_open",
    "rect": [
-    230,
-    579,
-    254.7,
-    221.4
+    232,
+    585,
+    237.7,
+    206.6
    ],
-   "desc_open": "a small wooden bedside cabinet with its door wide open and an empty shelf inside, same cabinet seen from the same angle",
-   "floor": true
+   "desc_open": "a small wooden bedside cabinet with its door wide open and an empty shelf inside, the same cabinet that stands closed at this spot in the picture, in the same perspective and wood colour as the rooms furniture",
+   "floor": true,
+   "placeholder": true
   }
  ],
  "items": [
