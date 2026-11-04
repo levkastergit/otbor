@@ -1,5 +1,5 @@
 {
- "summary": {"ready":207,"regen":34,"left":463},
+ "summary": {"ready":208,"regen":34,"left":462},
  "jobs": [
   {"id":"hub_pug_sit","group":"01_hub","ru":null,"state":"ready","picked":["hub_pug_sit__ref_1"],"tried":["hub_pug_sit__ref_1","hub_pug_sit__ref_2","hub_pug_sit__ref_3"],"note":null,"at":"2026-11-04 15:25:48","pc":"87da46b4"},
   {"id":"ui_panel_bottom","group":"10_ui_search","ru":"Нижняя панель экрана поиска (ПРОБА СТИЛЯ UI)","state":"ready","picked":["ui_panel_bottom__ref_3"],"tried":["ui_panel_bottom__ref_1","ui_panel_bottom__ref_2","ui_panel_bottom__ref_3","ui_panel_bottom__ref_4"],"note":null,"at":"2026-11-01 15:51:12","pc":"87da46b4"},
@@ -241,6 +241,7 @@
   {"id":"p0rec_magazine","group":"91_p0_reception","ru":null,"state":"regen","picked":[],"tried":["p0rec_magazine__edit_1","p0rec_magazine__edit_2","p0rec_magazine__edit_3"],"note":null,"at":"2026-11-04 15:27:18","pc":"87da46b4"},
   {"id":"p0rec_napkins","group":"91_p0_reception","ru":null,"state":"ready","picked":["p0rec_napkins__edit_3"],"tried":["p0rec_napkins__edit_1","p0rec_napkins__edit_2","p0rec_napkins__edit_3"],"note":null,"at":"2026-11-04 15:27:24","pc":"87da46b4"},
   {"id":"p0rec_open_cabinet","group":"91_p0_reception","ru":null,"state":"regen","picked":[],"tried":["p0rec_open_cabinet__edit_1","p0rec_open_cabinet__edit_2","p0rec_open_cabinet__edit_3"],"note":null,"at":"2026-11-04 15:28:06","pc":"87da46b4"},
-  {"id":"p0rec_postcard","group":"91_p0_reception","ru":null,"state":"regen","picked":[],"tried":["p0rec_postcard__edit_1","p0rec_postcard__edit_2","p0rec_postcard__edit_3"],"note":null,"at":"2026-11-04 15:28:09","pc":"87da46b4"}
+  {"id":"p0rec_postcard","group":"91_p0_reception","ru":null,"state":"regen","picked":[],"tried":["p0rec_postcard__edit_1","p0rec_postcard__edit_2","p0rec_postcard__edit_3"],"note":null,"at":"2026-11-04 15:28:09","pc":"87da46b4"},
+  {"id":"p0rec_sticky_note","group":"91_p0_reception","ru":null,"state":"ready","picked":["p0rec_sticky_note__edit_1"],"tried":["p0rec_sticky_note__edit_1","p0rec_sticky_note__edit_2","p0rec_sticky_note__edit_3"],"note":null,"at":"2026-11-04 15:28:22","pc":"87da46b4"}
  ]
 }
