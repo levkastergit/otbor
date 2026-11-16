@@ -2149,7 +2149,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a book publisher, a middle-aged man with grey hair and round glasses, white hotel bathrobe over a shirt",
+   "desc": "a book publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit, white shirt, dark green tie, brown shoes",
    "action": "sitting on an invisible armchair, reading a stack of printed pages and holding a half-eaten sandwich in the other hand, absent-minded, front three-quarter view, full body",
    "refs": [],
    "asset": "T_Izdatel_Gen_SitRead",
@@ -2288,7 +2288,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a book publisher, a middle-aged man with grey hair and round glasses, white hotel bathrobe over a shirt",
+   "desc": "a book publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit, white shirt, dark green tie, brown shoes",
    "action": "standing, holding a folder of papers, full body",
    "refs": [],
    "asset": "T_Izdatel_Gen_Body",
@@ -10621,7 +10621,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a cafe cashier, a stout middle-aged woman with a tall dyed-blonde hairdo, white apron over a blue dress",
+   "desc": "a cafe cashier, a stout middle-aged man with a shaved head and a short dark beard, white apron over a blue short-sleeved shirt, dark trousers, black shoes",
    "action": "standing behind an invisible counter, hands on the counter, skeptical look, front view, upper body",
    "refs": [],
    "asset": "T_Char_Kassir",
@@ -10806,7 +10806,7 @@
     "ref",
     "t2i"
    ],
-   "desc": "a hotel administrator, a middle-aged woman with short dark hair, burgundy uniform jacket with a small blank badge, white blouse",
+   "desc": "a hotel administrator, a young man with short black hair, burgundy uniform jacket with a small blank badge, white shirt, dark grey trousers, black shoes",
    "action": "standing behind an invisible reception desk, polite reserved smile, front view, upper body",
    "refs": [
     "datasets/char/043_Administrator_1.png"
@@ -11206,7 +11206,7 @@
     "ref",
     "t2i"
    ],
-   "desc": "a hotel administrator, a middle-aged woman with short dark hair, burgundy uniform jacket, white blouse",
+   "desc": "a hotel administrator, a young man with short black hair, burgundy uniform jacket with a small blank badge, white shirt, dark grey trousers, black shoes",
    "action": "close-up portrait, head and shoulders, calm expression, front view",
    "refs": [
     "datasets/char/043_Administrator_1.png"
@@ -11249,7 +11249,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "the publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit",
+   "desc": "a book publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit, white shirt, dark green tie, brown shoes",
    "action": "close-up portrait, head and shoulders, calm expression, front view",
    "refs": [],
    "asset": "T_Port_Izdatel",
@@ -11268,7 +11268,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a cafe cashier, a stout middle-aged woman with a tall dyed-blonde hairdo, white apron over a blue dress",
+   "desc": "a cafe cashier, a stout middle-aged man with a shaved head and a short dark beard, white apron over a blue short-sleeved shirt, dark trousers, black shoes",
    "action": "close-up portrait, head and shoulders, calm expression, front view",
    "refs": [],
    "asset": "T_Port_Kassir",
@@ -12840,7 +12840,7 @@
    "modes": [
     "ref"
    ],
-   "desc": "a hotel administrator, a middle-aged woman with short dark hair, burgundy uniform jacket with a small blank badge, white blouse",
+   "desc": "a hotel administrator, a young man with short black hair, burgundy uniform jacket with a small blank badge, white shirt, dark grey trousers, black shoes",
    "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
    "refs": [
     "datasets/char/043_Administrator_1.png"
@@ -12857,7 +12857,7 @@
    "modes": [
     "ref"
    ],
-   "desc": "a hotel administrator, a middle-aged woman with short dark hair, burgundy uniform jacket with a small blank badge, white blouse",
+   "desc": "a hotel administrator, a young man with short black hair, burgundy uniform jacket with a small blank badge, white shirt, dark grey trousers, black shoes",
    "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
    "refs": [
     "datasets/char/043_Administrator_1.png"
@@ -13030,7 +13030,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a book publisher, a middle-aged man with grey hair and round glasses, white hotel bathrobe over a shirt",
+   "desc": "a book publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit, white shirt, dark green tie, brown shoes",
    "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
    "refs": [],
    "asset": "REF3D_Izdatel",
@@ -13045,7 +13045,7 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a book publisher, a middle-aged man with grey hair and round glasses, white hotel bathrobe over a shirt",
+   "desc": "a book publisher, a heavyset middle-aged man with slicked-back grey hair and round glasses, brown three-piece suit, white shirt, dark green tie, brown shoes",
    "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
    "refs": [],
    "asset": "REF3D_Izdatel_Turn",
@@ -13064,12 +13064,12 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a cafe cashier, a stout middle-aged woman with a tall dyed-blonde hairdo, white apron over a blue dress",
+   "desc": "a cafe cashier, a stout middle-aged man with a shaved head and a short dark beard, white apron over a blue short-sleeved shirt, dark trousers, black shoes",
    "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
    "refs": [],
    "asset": "REF3D_Kassir",
    "priority": 1,
-   "ru": "Кассир кафе — А-поза (референс 3D-модели) (образца нет — только текст; образ придуман — проверить)",
+   "ru": "Кассир кафе — А-поза (референс 3D-модели) (образца нет — только текст)",
    "where": "3D-модель персонажа (вся игра)"
   },
   {
@@ -13079,12 +13079,12 @@
    "modes": [
     "t2i"
    ],
-   "desc": "a cafe cashier, a stout middle-aged woman with a tall dyed-blonde hairdo, white apron over a blue dress",
+   "desc": "a cafe cashier, a stout middle-aged man with a shaved head and a short dark beard, white apron over a blue short-sleeved shirt, dark trousers, black shoes",
    "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
    "refs": [],
    "asset": "REF3D_Kassir_Turn",
    "priority": 1,
-   "ru": "Кассир кафе — разворот для 3D: перед, бок, спина (образца нет — только текст; образ придуман — проверить)",
+   "ru": "Кассир кафе — разворот для 3D: перед, бок, спина (образца нет — только текст)",
    "where": "3D-модель персонажа (вся игра)",
    "size": [
     1472,
@@ -13119,6 +13119,116 @@
    "asset": "REF3D_Sosed_Turn",
    "priority": 1,
    "ru": "Сосед по купе — разворот для 3D: перед, бок, спина (образца нет — только текст; образ придуман — проверить)",
+   "where": "3D-модель персонажа (вся игра)",
+   "size": [
+    1472,
+    1024
+   ]
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_vospitatelnitsa_apose",
+   "lora": "char",
+   "modes": [
+    "t2i"
+   ],
+   "desc": "a kindergarten teacher, a young woman with a light brown ponytail, light green cardigan over a white blouse, navy blue knee-length skirt, flat beige shoes",
+   "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
+   "refs": [],
+   "asset": "REF3D_Vospitatelnitsa",
+   "priority": 1,
+   "ru": "Воспитательница — А-поза (референс 3D-модели)",
+   "where": "3D-модель персонажа (вся игра)"
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_vospitatelnitsa_turn",
+   "lora": "char",
+   "modes": [
+    "t2i"
+   ],
+   "desc": "a kindergarten teacher, a young woman with a light brown ponytail, light green cardigan over a white blouse, navy blue knee-length skirt, flat beige shoes",
+   "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
+   "refs": [],
+   "asset": "REF3D_Vospitatelnitsa_Turn",
+   "priority": 1,
+   "ru": "Воспитательница — разворот для 3D: перед, бок, спина",
+   "where": "3D-модель персонажа (вся игра)",
+   "size": [
+    1472,
+    1024
+   ]
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_bolnoi_apose",
+   "lora": "char",
+   "modes": [
+    "ref"
+   ],
+   "desc": "a dental patient, a man with ginger hair and a bandage tied around his swollen jaw, light blue shirt, grey trousers",
+   "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
+   "refs": [
+    "datasets/char/046_Bolnoi_1.png"
+   ],
+   "asset": "REF3D_Pacient",
+   "priority": 1,
+   "ru": "Пациент стоматолога — А-поза (референс 3D-модели)",
+   "where": "3D-модель персонажа (вся игра)"
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_bolnoi_turn",
+   "lora": "char",
+   "modes": [
+    "ref"
+   ],
+   "desc": "a dental patient, a man with ginger hair and a bandage tied around his swollen jaw, light blue shirt, grey trousers",
+   "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
+   "refs": [
+    "datasets/char/046_Bolnoi_1.png"
+   ],
+   "asset": "REF3D_Pacient_Turn",
+   "priority": 1,
+   "ru": "Пациент стоматолога — разворот для 3D: перед, бок, спина",
+   "where": "3D-модель персонажа (вся игра)",
+   "size": [
+    1472,
+    1024
+   ]
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_svetlana_apose",
+   "lora": "char",
+   "modes": [
+    "ref"
+   ],
+   "desc": "a librarian, an elderly woman with her hair in a bun and small glasses, green turtleneck sweater, brown skirt",
+   "action": "standing in a strict symmetrical A-pose for a 3D character model sheet: body upright and facing straight forward, both arms straight, held away from the sides at about 40 degrees, open palms facing the viewer, fingers together, legs straight and slightly apart, feet pointing forward, neutral expression, looking straight ahead, full body from head to feet, flat front orthographic view, no perspective",
+   "refs": [
+    "datasets/char/061_Uchilka_Uchitelskaia7.png"
+   ],
+   "asset": "REF3D_SvetlanaKarpovna",
+   "priority": 1,
+   "ru": "Светлана Карповна (библиотекарь) — А-поза (референс 3D-модели)",
+   "where": "3D-модель персонажа (вся игра)"
+  },
+  {
+   "group": "87_ref3d",
+   "id": "ref3d_svetlana_turn",
+   "lora": "char",
+   "modes": [
+    "ref"
+   ],
+   "desc": "a librarian, an elderly woman with her hair in a bun and small glasses, green turtleneck sweater, brown skirt",
+   "action": "a character turnaround reference sheet for 3D modelling: the exact same character drawn three times side by side on one sheet - front view on the left, side profile view in the middle, back view on the right - each figure standing in the same symmetrical A-pose with straight arms held away from the sides at about 40 degrees and legs slightly apart, all three figures at the same height and scale, heads and feet aligned, full body, flat orthographic views, no perspective",
+   "refs": [
+    "datasets/char/061_Uchilka_Uchitelskaia7.png"
+   ],
+   "asset": "REF3D_SvetlanaKarpovna_Turn",
+   "priority": 1,
+   "ru": "Светлана Карповна (библиотекарь) — разворот для 3D: перед, бок, спина",
    "where": "3D-модель персонажа (вся игра)",
    "size": [
     1472,

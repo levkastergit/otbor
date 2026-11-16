@@ -360,6 +360,20 @@
 },
 {
 "kind": "Персонажи",
+"name": "Воспитательница",
+"jobs": [
+{
+"id": "ref3d_vospitatelnitsa_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_vospitatelnitsa_turn",
+"goes": "Базовый референс для 3D-модели"
+}
+]
+},
+{
+"kind": "Персонажи",
 "name": "Физрук",
 "jobs": [
 {
@@ -376,6 +390,20 @@
 },
 {
 "id": "ref3d_fizruk_turn",
+"goes": "Базовый референс для 3D-модели"
+}
+]
+},
+{
+"kind": "Персонажи",
+"name": "Светлана Карповна (библиотекарь)",
+"jobs": [
+{
+"id": "ref3d_svetlana_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_svetlana_turn",
 "goes": "Базовый референс для 3D-модели"
 }
 ]
@@ -530,6 +558,20 @@
 },
 {
 "id": "ref3d_antonov_turn",
+"goes": "Базовый референс для 3D-модели"
+}
+]
+},
+{
+"kind": "Персонажи",
+"name": "Пациент стоматолога",
+"jobs": [
+{
+"id": "ref3d_bolnoi_apose",
+"goes": "Базовый референс для 3D-модели"
+},
+{
+"id": "ref3d_bolnoi_turn",
 "goes": "Базовый референс для 3D-модели"
 }
 ]
@@ -3974,6 +4016,12 @@
 },
 {
 "id": "ref3d_misha_turn"
+},
+{
+"id": "ref3d_vospitatelnitsa_apose"
+},
+{
+"id": "ref3d_vospitatelnitsa_turn"
 }
 ]
 },
@@ -4244,6 +4292,12 @@
 },
 {
 "id": "ref3d_fizruk_turn"
+},
+{
+"id": "ref3d_svetlana_apose"
+},
+{
+"id": "ref3d_svetlana_turn"
 }
 ]
 },
@@ -5153,6 +5207,12 @@
 },
 {
 "id": "ref3d_antonov_turn"
+},
+{
+"id": "ref3d_bolnoi_apose"
+},
+{
+"id": "ref3d_bolnoi_turn"
 }
 ]
 },

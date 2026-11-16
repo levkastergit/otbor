@@ -11,3 +11,4 @@ kit/7_SCENE_ITEMS.bat	7_SCENE_ITEMS.bat
 kit/scenes/p0_reception.json	scenes\p0_reception.json
 kit/jobs.json	jobs.json
 kit/8_REF3D.bat	8_REF3D.bat
+kit/9_REF3D_1611.bat	9_REF3D_1611.bat
